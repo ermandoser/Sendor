@@ -1,14 +1,26 @@
 
-<table>
+<table class="table table-striped">
   <tbody>
+    {% for task in tasks %}
+    {% set description = task['description'] %}
+    {% set state = task['state'] %}
     <tr>
-      Upload: {% if upload_done == True %} Done {% else %} Not Done {% endif %}
-    </tr>
-    {% for distribution_target in distributions_done %}
-    <tr>
-      {% set name = distribution_target['name'] %}
-      {% set done = distribution_target['done'] %}
-      {{name}}:{% if done == True %} Done {% else %} Not Done {% endif %}
+      <td>
+	{{description}}
+      </td>
+      <td>
+	{% if state == 'done' %}
+	<button type="button" disabled="disabled" class="btn btn-success">Done</button>
+	{% elif state == 'not_started' %}
+	<button type="button" disabled="disabled" class="btn btn-default">Not started</button>
+	{% elif state == 'in_progress' %}
+	<button type="button" disabled="disabled" class="btn btn-warning">In progress</button>
+	{% elif state == 'failed' %}
+	<button type="button" disabled="disabled" class="btn btn-danger">Failed</button>	
+	{% else %}
+	Error: Unknown state!
+	{% endif %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>

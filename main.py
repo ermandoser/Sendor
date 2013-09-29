@@ -27,6 +27,12 @@ class UploadFileTask(SendorTask):
 	def __init__(self, started=None, completed=None):
 		super(UploadFileTask, self).__init__(started, completed)
 
+	def string_description(self):
+		return "Upload file"
+
+	def string_state(self):
+		return 'done'
+
 def create_ui():
 
 	ui_app = Blueprint('ui', __name__)
@@ -39,13 +45,13 @@ def create_ui():
 		if current_job:
 			jobs.append(current_job)
 		jobs = jobs + list(g_sendor_queue.jobs.queue)
-		result = ""
+		jobs_html = ""
 
 		for job in jobs:
 			progress = job.visualize_progress()
-			result = result + progress + "\n"
-		
-		return result
+			jobs_html = jobs_html + progress
+
+		return render_template('index.html', jobs_html = jobs_html)
 
 	@ui_app.route('/upload.html', methods = ['GET', 'POST'])
 	def upload():

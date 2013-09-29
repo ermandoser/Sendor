@@ -12,26 +12,25 @@ class LocalMachineDistributionJob(SendorJob):
 
     def progress(self):
 
-        status = { 'upload_done' : True,
-                   'distributions_done' : [] }
+        status = []
 
-        for task in self.tasks[1:]:
-            status['distributions_done'].append({ 'name' : task.target,
-                                                'done' : task.done() })
+        for task in self.tasks[0:]:
+            status.append({ 'description' : task.string_description(),
+                            'state' : task.string_state() })
             
         return status
 
     def visualize_progress(self):
         progress = self.progress()
         return render_template('LocalMachineDistributionJob.html',
-                               upload_done = progress['upload_done'],
-                               distributions_done = progress['distributions_done'])
+                               tasks = progress)
 
 class CopyFileTaskWithProgress(CopyFileTask):
 
     NOT_STARTED = 0
     STARTED = 1
     COMPLETED = 2
+    FAILED = 3
     
     def __init__(self, source, target):
         self.state = self.NOT_STARTED
@@ -49,8 +48,18 @@ class CopyFileTaskWithProgress(CopyFileTask):
         super(CopyFileTaskWithProgress, self).run()
         time.sleep(5)
 
-    def done(self):
-        return self.state == self.COMPLETED
+    def string_description(self):
+        return "Copy file " + self.source + " to " + self.target
+
+    def string_state(self):
+        if self.state == self.NOT_STARTED:
+            return 'not_started'
+        elif self.state == self.STARTED:
+            return 'in_progress'
+        elif self.state == self.COMPLETED:
+            return 'done'
+        else:
+            return 'unknown'
 
 
 def create_local_machine_distribution_job(filename, upload_file_full_path, upload_file_task, targets):
