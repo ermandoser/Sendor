@@ -3,6 +3,8 @@ from SendorQueue import SendorJob, CopyFileTask
 import os
 import time
 
+from flask import render_template
+
 class LocalMachineDistributionJob(SendorJob):
 
     def __init__(self, tasks=[], started=None, completed=None):
@@ -19,6 +21,11 @@ class LocalMachineDistributionJob(SendorJob):
             
         return status
 
+    def visualize_progress(self):
+        progress = self.progress()
+        return render_template('LocalMachineDistributionJob.html',
+                               upload_done = progress['upload_done'],
+                               distributions_done = progress['distributions_done'])
 
 class CopyFileTaskWithProgress(CopyFileTask):
 

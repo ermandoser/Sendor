@@ -1,0 +1,15 @@
+
+<table>
+  <tbody>
+    <tr>
+      Upload: {% if upload_done == True %} Done {% else %} Not Done {% endif %}
+    </tr>
+    {% for distribution_target in distributions_done %}
+    <tr>
+      {% set name = distribution_target['name'] %}
+      {% set done = distribution_target['done'] %}
+      {{name}}:{% if done == True %} Done {% else %} Not Done {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

@@ -40,13 +40,10 @@ def create_ui():
 			jobs.append(current_job)
 		jobs = jobs + list(g_sendor_queue.jobs.queue)
 		result = ""
-		print "queue length: " + str(len(jobs))
+
 		for job in jobs:
-			print "processing one"
-			progress = job.progress()
-			print progress
-			result = result + str(progress)
-			result = result + "\n"
+			progress = job.visualize_progress()
+			result = result + progress + "\n"
 		
 		return result
 
