@@ -1,9 +1,8 @@
 
-from Queue import Queue
 import thread
-import os
+import unittest
 
-from fabric.api import local, settings
+from Queue import Queue
 
 from flask import render_template
 
@@ -23,7 +22,8 @@ class SendorJob(object):
 
         for task in self.tasks[0:]:
             status.append({ 'description' : task.string_description(),
-                            'state' : task.string_state() })
+                            'state' : task.string_state(),
+                            'details' : task.string_details() })
             
         return status
 
@@ -40,6 +40,7 @@ class SendorTask(object):
     
     def __init__(self):
         self.state = self.NOT_STARTED
+        self.details = ""
 
     def started(self):
         self.state = self.STARTED
@@ -69,18 +70,12 @@ class SendorTask(object):
         else:
             raise Exception("Unknown state" + str(self.state))
 
-class CopyFileTask(SendorTask):
+    def string_details(self):
+        return self.details
 
-    def __init__(self, source, target):
-        super(CopyFileTask, self).__init__()
-        self.source = source
-        self.target = target
+    def append_details(self, string):
+        self.details = self.details + string
 
-    def run(self):
-        local('cp ' + self.source + ' ' + self.target)
-
-    def string_description(self):
-        return "Copy file " + self.source + " to " + self.target
 
 class SendorQueue():
 
@@ -121,8 +116,6 @@ class SendorQueue():
     def wait(self):
         self.jobs.join()
         
-
-import unittest
 
 class SendorQueueUnitTest(unittest.TestCase):
 
@@ -203,22 +196,6 @@ class SendorQueueUnitTest(unittest.TestCase):
         self.sendor_queue.add(job)
         self.sendor_queue.wait()
         self.assertEquals(state.state, COMPLETED_JOB)
-
-class CopyFileTaskUnitTest(unittest.TestCase):
-
-    def setUp(self):
-        local('mkdir unittest')
-        local('echo abc123 > unittest/source')
-
-    def test_copy_file_task(self):
-
-        self.assertFalse(os.path.exists('unittest/target'))
-        task = CopyFileTask('unittest/source', 'unittest/target')
-        task.run()
-        self.assertTrue(os.path.exists('unittest/target'))
-
-    def tearDown(self):
-        local('rm -rf unittest')
 
 if __name__ == '__main__':
     unittest.main()

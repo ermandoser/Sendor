@@ -1,7 +1,9 @@
 
-from SendorQueue import SendorJob, CopyFileTask
 import os
 import time
+
+from SendorQueue import SendorJob
+from tasks import CopyFileTask
 
 class DelayedCopyFileTask(CopyFileTask):
 

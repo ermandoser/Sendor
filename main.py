@@ -6,7 +6,9 @@ import logging
 import sys
 import os
 
-from SendorQueue import SendorQueue, SendorJob, CopyFileTask, SendorTask
+from SendorQueue import SendorQueue, SendorJob
+
+from tasks import CopyFileTask, UploadFileTask
 
 from LocalMachineDistributionJob import create_local_machine_distribution_job
 
@@ -21,17 +23,6 @@ DISTRIBUTION_TARGETS = [
 ]
 
 g_sendor_queue = None
-
-class UploadFileTask(SendorTask):
-
-	def __init__(self):
-		super(UploadFileTask, self).__init__()
-
-	def run(self):
-		pass
-
-	def string_description(self):
-		return "Upload file"
 
 def create_ui():
 
@@ -60,13 +51,13 @@ def create_ui():
 		elif request.method == 'POST':
 
 			targets = DISTRIBUTION_TARGETS
-			upload_file_task = UploadFileTask()
 
 			file = request.files['file']
 			filename = secure_filename(file.filename)
 			upload_file_full_path = os.path.join(UPLOAD_FOLDER, filename)
 			file.save(upload_file_full_path)
 
+			upload_file_task = UploadFileTask(filename)
 			job = create_local_machine_distribution_job(filename, upload_file_full_path, upload_file_task, targets)
 
 			g_sendor_queue.add(job)
