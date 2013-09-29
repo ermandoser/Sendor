@@ -24,14 +24,14 @@ g_sendor_queue = None
 
 class UploadFileTask(SendorTask):
 
-	def __init__(self, started=None, completed=None):
-		super(UploadFileTask, self).__init__(started, completed)
+	def __init__(self):
+		super(UploadFileTask, self).__init__()
+
+	def run(self):
+		pass
 
 	def string_description(self):
 		return "Upload file"
-
-	def string_state(self):
-		return 'done'
 
 def create_ui():
 

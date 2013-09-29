@@ -9,12 +9,12 @@
 	{{description}}
       </td>
       <td>
-	{% if state == 'done' %}
-	<button type="button" disabled="disabled" class="btn btn-success">Done</button>
-	{% elif state == 'not_started' %}
+	{% if state == 'not_started' %}
 	<button type="button" disabled="disabled" class="btn btn-default">Not started</button>
 	{% elif state == 'in_progress' %}
 	<button type="button" disabled="disabled" class="btn btn-warning">In progress</button>
+	{% elif state == 'completed' %}
+	<button type="button" disabled="disabled" class="btn btn-success">Done</button>
 	{% elif state == 'failed' %}
 	<button type="button" disabled="disabled" class="btn btn-danger">Failed</button>	
 	{% else %}

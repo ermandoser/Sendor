@@ -1,37 +1,86 @@
 
 from Queue import Queue
 import thread
-from fabric.api import local, settings
 import os
+
+from fabric.api import local, settings
+
+from flask import render_template
 
 class SendorJob(object):
 
-    def __init__(self, tasks=[], started=None, completed=None):
+    def __init__(self, tasks=[]):
         self.tasks = tasks
-        self.started = started
-        self.completed = completed
+
+    def started(self):
+        pass
+
+    def completed(self):
+        pass
 
     def progress(self):
-        return None
+        status = []
+
+        for task in self.tasks[0:]:
+            status.append({ 'description' : task.string_description(),
+                            'state' : task.string_state() })
+            
+        return status
+
+    def visualize_progress(self):
+        progress = self.progress()
+        return render_template('SendorJob.html', tasks = progress)
 
 class SendorTask(object):
 
-    def __init__(self, started=None, completed=None):
-        self.started = started
-        self.completed = completed
+    NOT_STARTED = 0
+    STARTED = 1
+    COMPLETED = 2
+    FAILED = 3
+    
+    def __init__(self):
+        self.state = self.NOT_STARTED
+
+    def started(self):
+        self.state = self.STARTED
+
+    def completed(self):
+        self.state = self.COMPLETED
+
+    def failed(self):
+        self.state = self.FAILED
+
 
     def run(self):
         pass
 
+    def string_description(self):
+        raise Exception("No description given")
+
+    def string_state(self):
+        if self.state == self.NOT_STARTED:
+            return 'not_started'
+        elif self.state == self.STARTED:
+            return 'in_progress'
+        elif self.state == self.COMPLETED:
+            return 'completed'
+        elif self.state == self.FAILED:
+            return 'failed'
+        else:
+            raise Exception("Unknown state" + str(self.state))
+
 class CopyFileTask(SendorTask):
 
-    def __init__(self, source, target, started=None, completed=None):
-        super(CopyFileTask, self).__init__(started, completed)
+    def __init__(self, source, target):
+        super(CopyFileTask, self).__init__()
         self.source = source
         self.target = target
 
     def run(self):
         local('cp ' + self.source + ' ' + self.target)
+
+    def string_description(self):
+        return "Copy file " + self.source + " to " + self.target
 
 class SendorQueue():
 
@@ -47,21 +96,19 @@ class SendorQueue():
             job = self.jobs.get()
             self.current_job = job
 
-            if job.started:
-                job.started()
+            job.started()
 
             for task in job.tasks:
 
-                if task.started:
-                    task.started()
-
-                task.run()
-
-                if task.completed:
+                task.started()
+                try:
+                    task.run()
                     task.completed()
+                except:
+                    task.failed()
+                    raise
 
-            if job.completed:
-                job.completed()
+            job.completed()
 
             self.current_job = None
 
@@ -89,27 +136,27 @@ class SendorQueueUnitTest(unittest.TestCase):
         COMPLETED_JOB = 2
 
         class State:
-            def __init__(self):
+            def __init__(self, unittest):
                 self.state = NOT_STARTED_JOB
+                self.unittest = unittest
 
-        state = State()
+        state = State(self)
         
-        def started_job_func():
-            self.assertEquals(state.state, NOT_STARTED_JOB)
-            state.state = STARTED_JOB
+        class InstrumentedSendorJob(SendorJob):
 
-        def completed_job_func():
-            self.assertEquals(state.state, STARTED_JOB)
-            state.state = COMPLETED_JOB
+            def started(self):
+                state.unittest.assertEquals(state.state, NOT_STARTED_JOB)
+                state.state = STARTED_JOB
+                super(InstrumentedSendorJob, self).started()
 
-        job = SendorJob([],
-                        started_job_func,
-                        completed_job_func)
+            def completed(self):
+                super(InstrumentedSendorJob, self).completed()
+                state.unittest.assertEquals(state.state, STARTED_JOB)
+                state.state = COMPLETED_JOB
 
+        job = InstrumentedSendorJob([])
         self.sendor_queue.add(job)
-
         self.sendor_queue.wait()
-
         self.assertEquals(state.state, COMPLETED_JOB)
 
     def test_job_with_single_task(self):
@@ -120,45 +167,41 @@ class SendorQueueUnitTest(unittest.TestCase):
         COMPLETED_TASK = 3
         COMPLETED_JOB = 4
 
-        class State:
-            def __init__(self):
+        class State(object):
+            def __init__(self, unittest):
                 self.state = NOT_STARTED_JOB
+                self.unittest = unittest
 
-        state = State()
+        state = State(self)
+
+        class InstrumentedSendorJob(SendorJob):
+
+            def started(self):
+                state.unittest.assertEquals(state.state, NOT_STARTED_JOB)
+                state.state = STARTED_JOB
+                super(InstrumentedSendorJob, self).started()
+
+            def completed(self):
+                super(InstrumentedSendorJob, self).completed()
+                state.unittest.assertEquals(state.state, COMPLETED_TASK)
+                state.state = COMPLETED_JOB
+
+        class InstrumentedSendorTask(SendorTask):
+            
+            def started(self):
+                state.unittest.assertEquals(state.state, STARTED_JOB)
+                state.state = STARTED_TASK
+                super(InstrumentedSendorTask, self).started()
+
+            def completed(self):
+                super(InstrumentedSendorTask, self).completed()
+                state.unittest.assertEquals(state.state, STARTED_TASK)
+                state.state = COMPLETED_TASK
         
-        def started_job_func():
-            self.assertEquals(state.state, NOT_STARTED_JOB)
-            state.state = STARTED_JOB
-
-        def started_task_func():
-            self.assertEquals(state.state, STARTED_JOB)
-            state.state = STARTED_TASK
-
-        def completed_task_func():
-            self.assertEquals(state.state, STARTED_TASK)
-            state.state = COMPLETED_TASK
-
-        def completed_job_func():
-            self.assertEquals(state.state, COMPLETED_TASK)
-            state.state = COMPLETED_JOB
-
-        class State:
-            def __init__(self):
-                self.state = NOT_STARTED_JOB
-
-        state = State()
-
-        task = SendorTask(started_task_func,
-                          completed_task_func)
-
-        job = SendorJob([task],
-                        started_job_func,
-                        completed_job_func)
-
+        task = InstrumentedSendorTask()
+        job = InstrumentedSendorJob([task])
         self.sendor_queue.add(job)
-
         self.sendor_queue.wait()
-
         self.assertEquals(state.state, COMPLETED_JOB)
 
 class CopyFileTaskUnitTest(unittest.TestCase):
