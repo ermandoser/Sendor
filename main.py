@@ -6,7 +6,9 @@ import logging
 import sys
 import os
 
-from SendorQueue import SendorQueue, SendorJob, CopyFileTask
+from SendorQueue import SendorQueue, SendorJob, CopyFileTask, SendorTask
+
+from LocalMachineDistributionJob import create_local_machine_distribution_job
 
 logger = logging.getLogger('main')
 
@@ -20,17 +22,10 @@ DISTRIBUTION_TARGETS = [
 
 g_sendor_queue = None
 
-def create_distribution_job(filename):
+class UploadFileTask(SendorTask):
 
-	global g_sendor_queue
-	
-	tasks = []
-	for target in DISTRIBUTION_TARGETS:
-		tasks.append(CopyFileTask(UPLOAD_FOLDER + '/' + filename, target + '/' + filename))
-
-	job = SendorJob(tasks)
-
-	g_sendor_queue.add(job)
+	def __init__(self, started=None, completed=None):
+		super(UploadFileTask, self).__init__(started, completed)
 
 def create_ui():
 
@@ -39,18 +34,42 @@ def create_ui():
 	@ui_app.route('/')
 	@ui_app.route('/index.html', methods = ['GET'])
 	def index():
-		return "bodybodybody"
+		jobs = []
+		current_job = g_sendor_queue.current_job
+		if current_job:
+			jobs.append(current_job)
+		jobs = jobs + list(g_sendor_queue.jobs.queue)
+		result = ""
+		print "queue length: " + str(len(jobs))
+		for job in jobs:
+			print "processing one"
+			progress = job.progress()
+			print progress
+			result = result + str(progress)
+			result = result + "\n"
+		
+		return result
 
 	@ui_app.route('/upload.html', methods = ['GET', 'POST'])
 	def upload():
 		if request.method == 'GET':
 			return Response(render_template('upload_form.html'))
 		elif request.method == 'POST':
+
+			targets = DISTRIBUTION_TARGETS
+			upload_file_task = UploadFileTask()
+
 			file = request.files['file']
 			filename = secure_filename(file.filename)
-			file.save(os.path.join(UPLOAD_FOLDER, filename))
-			create_distribution_job(filename)
-			return "Upload complete"
+			upload_file_full_path = os.path.join(UPLOAD_FOLDER, filename)
+			file.save(upload_file_full_path)
+
+			job = create_local_machine_distribution_job(filename, upload_file_full_path, upload_file_task, targets)
+
+			g_sendor_queue.add(job)
+
+#			return redirect('index.html')
+			return "Upload done"
 
 	logger.info("Created ui")
 

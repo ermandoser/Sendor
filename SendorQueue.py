@@ -4,12 +4,15 @@ import thread
 from fabric.api import local, settings
 import os
 
-class SendorJob:
+class SendorJob(object):
 
     def __init__(self, tasks=[], started=None, completed=None):
         self.tasks = tasks
         self.started = started
         self.completed = completed
+
+    def progress(self):
+        return None
 
 class SendorTask(object):
 
@@ -36,11 +39,13 @@ class SendorQueue():
 
         self.jobs = Queue()
         thread.start_new_thread((lambda sendor_queue: sendor_queue.job_worker_thread()), (self,))
+        self.current_job = None
 
     def job_worker_thread(self):
 	while True:
 
             job = self.jobs.get()
+            self.current_job = job
 
             if job.started:
                 job.started()
@@ -57,6 +62,8 @@ class SendorQueue():
 
             if job.completed:
                 job.completed()
+
+            self.current_job = None
 
             self.jobs.task_done()
 
