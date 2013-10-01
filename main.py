@@ -25,18 +25,22 @@ def create_ui():
 	@ui_app.route('/')
 	@ui_app.route('/index.html', methods = ['GET'])
 	def index():
-		jobs = []
-		current_job = g_sendor_queue.current_job
-		if current_job:
-			jobs.append(current_job)
-		jobs = jobs + list(g_sendor_queue.jobs.queue)
-		jobs_html = ""
+		pending_jobs = []
+		for job in list(g_sendor_queue.pending_jobs.queue):
+			pending_jobs.append(job.progress())
 
-		for job in jobs:
-			progress = job.visualize_progress()
-			jobs_html = jobs_html + progress
+		current_job = None
+		if g_sendor_queue.current_job:
+			current_job = g_sendor_queue.current_job.progress()
 
-		return render_template('index.html', jobs_html = jobs_html)
+		past_jobs = []
+		for job in reversed(list(g_sendor_queue.past_jobs.queue)):
+			past_jobs.append(job.progress())
+
+		return render_template('index.html',
+				       pending_jobs = pending_jobs,
+				       current_job = current_job,
+				       past_jobs = past_jobs)
 
 	@ui_app.route('/upload.html', methods = ['GET', 'POST'])
 	def upload():
@@ -57,8 +61,7 @@ def create_ui():
 
 			g_sendor_queue.add(job)
 
-#			return redirect('index.html')
-			return "Upload done"
+			return redirect('index.html')
 
 	logger.info("Created ui")
 

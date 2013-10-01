@@ -81,14 +81,15 @@ class SendorQueue():
 
     def __init__(self):
 
-        self.jobs = Queue()
-        thread.start_new_thread((lambda sendor_queue: sendor_queue.job_worker_thread()), (self,))
+        self.pending_jobs = Queue()
         self.current_job = None
+        self.past_jobs = Queue()
+        thread.start_new_thread((lambda sendor_queue: sendor_queue.job_worker_thread()), (self,))
 
     def job_worker_thread(self):
 	while True:
 
-            job = self.jobs.get()
+            job = self.pending_jobs.get()
             self.current_job = job
 
             job.started()
@@ -107,14 +108,15 @@ class SendorQueue():
 
             self.current_job = None
 
-            self.jobs.task_done()
+            self.pending_jobs.task_done()
 
+            self.past_jobs.put(job)
 
     def add(self, job):
-        self.jobs.put(job)
+        self.pending_jobs.put(job)
 
     def wait(self):
-        self.jobs.join()
+        self.pending_jobs.join()
         
 
 class SendorQueueUnitTest(unittest.TestCase):
