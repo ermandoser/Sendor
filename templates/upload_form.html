@@ -1,9 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-  <body>
-    <form action="" method=post enctype=multipart/form-data>
-      <input type=file name=file>
-      <input type=submit action=Upload>
-    </form>
-  </body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+
+<form action="" method=post enctype=multipart/form-data>
+
+  <legend>1. Choose a file</legend>
+  <input type="file" name="file">
+  <br>
+
+  <legend>2. Choose RSPs</legend>
+
+  <label class="checkbox">
+    <input type="checkbox">blah
+  </label>
+
+  <br>
+  <legend>3. Fire in the hole!</legend>
+  <input type="submit" action="upload">
+</form>
+
+{% endblock %}

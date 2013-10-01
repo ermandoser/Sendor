@@ -10,17 +10,11 @@ from SendorQueue import SendorQueue, SendorJob
 
 from tasks import CopyFileTask, UploadFileTask
 
-from LocalMachineDistributionJob import create_local_machine_distribution_job
+import LocalMachineTargets
 
 logger = logging.getLogger('main')
 
 UPLOAD_FOLDER = 'test/upload'
-
-DISTRIBUTION_TARGETS = [
-	'test/targetdir1',
-	'test/targetdir2',
-	'test/targetdir3'
-]
 
 g_sendor_queue = None
 
@@ -47,10 +41,11 @@ def create_ui():
 	@ui_app.route('/upload.html', methods = ['GET', 'POST'])
 	def upload():
 		if request.method == 'GET':
-			return Response(render_template('upload_form.html'))
+			return Response(render_template('upload_form.html',
+							targets = LocalMachineTargets.get_targets()))
 		elif request.method == 'POST':
 
-			targets = DISTRIBUTION_TARGETS
+			target_ids = ['target2']
 
 			file = request.files['file']
 			filename = secure_filename(file.filename)
@@ -58,7 +53,8 @@ def create_ui():
 			file.save(upload_file_full_path)
 
 			upload_file_task = UploadFileTask(filename)
-			job = create_local_machine_distribution_job(filename, upload_file_full_path, upload_file_task, targets)
+			distribute_file_tasks = LocalMachineTargets.create_distribution_tasks(filename, upload_file_full_path, target_ids)
+			job = SendorJob([upload_file_task] + distribute_file_tasks)
 
 			g_sendor_queue.add(job)
 
@@ -85,6 +81,8 @@ def main(host, port):
 	g_sendor_queue = SendorQueue()
 
 	logger.info("Starting wsgi server")
+
+	LocalMachineTargets.load('local_machine_targets.json')
 
 	root.run(host = host, port = port, debug = True)
 
