@@ -20,6 +20,8 @@
 	<button type="button" disabled="disabled" class="btn btn-success">Done</button>
 	{% elif state == 'failed' %}
 	<button type="button" disabled="disabled" class="btn btn-danger">Failed</button>	
+	{% elif state == 'canceled' %}
+	<button type="button" disabled="disabled" class="btn btn-inverse">Canceled</button>	
 	{% else %}
 	Error: Unknown state!
 	{% endif %}
@@ -45,6 +47,9 @@
 <h2> Current job </h2>
 
 {% if current_job %}
+
+<a href="cancel.html" class="btn btn-primary">Cancel this job</a>
+
 {{ SendorJob(current_job) }}
 {% endif %}
 

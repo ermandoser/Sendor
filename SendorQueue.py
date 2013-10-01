@@ -37,6 +37,7 @@ class SendorTask(object):
     STARTED = 1
     COMPLETED = 2
     FAILED = 3
+    CANCELED = 4
     
     def __init__(self):
         self.state = self.NOT_STARTED
@@ -51,6 +52,8 @@ class SendorTask(object):
     def failed(self):
         self.state = self.FAILED
 
+    def canceled(self):
+        self.state = self.CANCELED
 
     def run(self):
         pass
@@ -67,6 +70,8 @@ class SendorTask(object):
             return 'completed'
         elif self.state == self.FAILED:
             return 'failed'
+        elif self.state == self.CANCELED:
+            return 'canceled'
         else:
             raise Exception("Unknown state" + str(self.state))
 
@@ -90,19 +95,23 @@ class SendorQueue():
 	while True:
 
             job = self.pending_jobs.get()
+            self.current_job_is_canceled = False
             self.current_job = job
 
             job.started()
 
             for task in job.tasks:
 
-                task.started()
-                try:
-                    task.run()
-                    task.completed()
-                except:
-                    task.failed()
-                    raise
+                if self.current_job_is_canceled:
+                    task.canceled()
+                else:
+                    try:
+                        task.started()
+                        task.run()
+                        task.completed()
+                    except:
+                        task.failed()
+                        self.cancel_current_job()
 
             job.completed()
 
@@ -117,6 +126,9 @@ class SendorQueue():
 
     def wait(self):
         self.pending_jobs.join()
+
+    def cancel_current_job(self):
+        self.current_job_is_canceled = True
         
 
 class SendorQueueUnitTest(unittest.TestCase):

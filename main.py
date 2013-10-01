@@ -26,7 +26,7 @@ def create_ui():
 	@ui_app.route('/index.html', methods = ['GET'])
 	def index():
 		pending_jobs = []
-		for job in list(g_sendor_queue.pending_jobs.queue):
+		for job in reversed(list(g_sendor_queue.pending_jobs.queue)):
 			pending_jobs.append(job.progress())
 
 		current_job = None
@@ -41,6 +41,11 @@ def create_ui():
 				       pending_jobs = pending_jobs,
 				       current_job = current_job,
 				       past_jobs = past_jobs)
+
+	@ui_app.route('/cancel.html', methods = ['GET'])
+	def cancel():
+		g_sendor_queue.cancel_current_job()
+		return redirect('index.html')
 
 	@ui_app.route('/upload.html', methods = ['GET', 'POST'])
 	def upload():
