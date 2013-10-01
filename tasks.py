@@ -3,11 +3,24 @@ import os
 import unittest
 import time
 
+import fabric.api
+
 from fabric.api import local
 
 from SendorQueue import SendorTask
 
-class CopyFileTask(SendorTask):
+class FabricTask(SendorTask):
+    
+    def fabric_local(self, command):
+        with fabric.api.settings(warn_only = True):
+            result = local(command, capture = True)
+            self.append_details(command)
+            self.append_details(result)
+            self.append_details(result.stderr)
+            if result.failed:
+                raise Exception("Fabric command failed")
+
+class CopyFileTask(FabricTask):
 
     def __init__(self, source, target):
         super(CopyFileTask, self).__init__()
@@ -15,7 +28,7 @@ class CopyFileTask(SendorTask):
         self.target = target
 
     def run(self):
-        local('cp ' + self.source + ' ' + self.target)
+        self.fabric_local('cp ' + self.source + ' ' + self.target)
 
     def string_description(self):
         return "Copy file " + self.source + " to " + self.target

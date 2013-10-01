@@ -7,9 +7,17 @@
     {% for task in tasks %}
     {% set description = task['description'] %}
     {% set state = task['state'] %}
+    {% set details = task['details'] %}
     <tr>
       <td>
-	{{description}}
+	<div>
+	  {{description}}
+	</div>
+	<div>
+	  {% if details != "" %}
+	  <pre>{{details}}</pre>
+	  {% endif %}
+	</div>
       </td>
       <td>
 	{% if state == 'not_started' %}

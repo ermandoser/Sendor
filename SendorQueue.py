@@ -27,10 +27,6 @@ class SendorJob(object):
             
         return status
 
-    def visualize_progress(self):
-        progress = self.progress()
-        return render_template('SendorJob.html', tasks = progress)
-
 class SendorTask(object):
 
     NOT_STARTED = 0
@@ -73,13 +69,13 @@ class SendorTask(object):
         elif self.state == self.CANCELED:
             return 'canceled'
         else:
-            raise Exception("Unknown state" + str(self.state))
+            raise Exception("Unknown state " + str(self.state))
 
     def string_details(self):
         return self.details
 
     def append_details(self, string):
-        self.details = self.details + string
+        self.details = self.details + string + "\n"
 
 
 class SendorQueue():
