@@ -45,8 +45,7 @@ def create_ui():
 							targets = LocalMachineTargets.get_targets()))
 		elif request.method == 'POST':
 
-			target_ids = ['target2']
-
+			target_ids = request.form.getlist('target')
 			file = request.files['file']
 			filename = secure_filename(file.filename)
 			upload_file_full_path = os.path.join(UPLOAD_FOLDER, filename)

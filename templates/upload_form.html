@@ -10,9 +10,12 @@
 
   <legend>2. Choose RSPs</legend>
 
+  {% for id, parameters in targets.iteritems() %}
+  {% set name = parameters['name'] %}
   <label class="checkbox">
-    <input type="checkbox">blah
+    <input type="checkbox" name="target" value="{{ id }}" checked>{{ name }}
   </label>
+  {% endfor %}
 
   <br>
   <legend>3. Fire in the hole!</legend>
