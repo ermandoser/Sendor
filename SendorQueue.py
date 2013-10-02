@@ -6,6 +6,8 @@ from Queue import Queue
 
 from flask import render_template
 
+import traceback
+
 class SendorJob(object):
 
     def __init__(self, tasks=[]):
@@ -105,9 +107,10 @@ class SendorQueue():
                         task.started()
                         task.run()
                         task.completed()
-                    except:
+                    except :
                         task.failed()
                         self.cancel_current_job()
+                        traceback.print_exc()
 
             job.completed()
 

@@ -8,15 +8,20 @@ import os
 
 from SendorQueue import SendorQueue, SendorJob
 
-from tasks import CopyFileTask, UploadFileTask
+from FileStash import FileStash
+
+from tasks import StashFileTask
 
 import LocalMachineTargets
 
 logger = logging.getLogger('main')
 
 UPLOAD_FOLDER = 'test/upload'
+FILE_STASH_FOLDER = 'test/file_stash'
 
 g_sendor_queue = None
+
+g_file_stash = None
 
 def create_ui():
 
@@ -60,9 +65,9 @@ def create_ui():
 			upload_file_full_path = os.path.join(UPLOAD_FOLDER, filename)
 			file.save(upload_file_full_path)
 
-			upload_file_task = UploadFileTask(filename)
-			distribute_file_tasks = LocalMachineTargets.create_distribution_tasks(filename, upload_file_full_path, target_ids)
-			job = SendorJob([upload_file_task] + distribute_file_tasks)
+			stash_file_task = StashFileTask(UPLOAD_FOLDER, filename, g_file_stash)
+			distribute_file_tasks = LocalMachineTargets.create_distribution_tasks(stash_file_task.get_file_func(), filename, target_ids)
+			job = SendorJob([stash_file_task] + distribute_file_tasks)
 
 			g_sendor_queue.add(job)
 
@@ -74,6 +79,7 @@ def create_ui():
 
 def main(host, port):
 	global g_sendor_queue
+	global g_file_stash
 	
 	root = Flask(__name__)
 
@@ -86,6 +92,7 @@ def main(host, port):
 		return redirect('ui')
 
 	g_sendor_queue = SendorQueue()
+	g_file_stash = FileStash(FILE_STASH_FOLDER)
 
 	logger.info("Starting wsgi server")
 

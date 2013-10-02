@@ -22,6 +22,8 @@ class StashedFile(object):
 class FileStash(object):
 
     def __init__(self, root_path):
+        if not os.path.exists(root_path):
+            raise Exception("Stash directory " + root_path + " does not exist")
         self.root_path = root_path
         self.build_index()
 

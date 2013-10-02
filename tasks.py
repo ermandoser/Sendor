@@ -45,6 +45,44 @@ class UploadFileTask(SendorTask):
     def string_description(self):
         return "Upload file " + self.source
 
+class StashFileTask(SendorTask):
+
+    def __init__(self, path, source, file_stash):
+        super(StashFileTask, self).__init__()
+        self.path = path
+        self.source = source
+        self.file_stash = file_stash
+        self.stashed_file = None
+
+    def run(self):
+        self.stashed_file = self.file_stash.add(self.path, self.source)
+
+    def string_description(self):
+        return "Stash file " + self.source
+
+    def get_file_func(self):
+
+        def get_file():
+            return self.stashed_file
+
+        return get_file
+
+
+class CopyStashedFileTask(FabricTask):
+
+    def __init__(self, get_file, target):
+        super(CopyStashedFileTask, self).__init__()
+        self.get_file = get_file
+        self.target = target
+
+    def run(self):
+        source_path = self.get_file().get_full_path()
+        self.fabric_local('cp ' + source_path + ' ' + self.target)
+
+    def string_description(self):
+        return "Copy to " + self.target
+
+
 class CopyFileTaskUnitTest(unittest.TestCase):
 
     def setUp(self):
