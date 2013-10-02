@@ -1,6 +1,8 @@
 
-import unittest
+import os
 import os.path
+import shutil
+import unittest
 
 from fabric.api import local
 
@@ -54,8 +56,8 @@ class FileStash(object):
 
     def add(self, original_path, filename):
         """ Add a file to the stash
-            The file should not exist in the index nor stash directory tree
-            The file will be copied into the stash directory tree, and added to the index
+            If the file already exists in the stash, this operation returns the stashed file
+            Otherwise, the file will be copied into the stash directory tree, and added to the index, and the stashed file is returned
             """
         original_file = os.path.join(original_path, filename)
         
@@ -69,9 +71,9 @@ class FileStash(object):
             stashed_file = file.get_full_path()
 
             if not os.path.exists(os.path.join(self.root_path, sha1sum)):
-                local('mkdir ' + os.path.join(self.root_path, sha1sum))
+                os.mkdir(os.path.join(self.root_path, sha1sum))
 
-            local('cp "' + original_file + '" "' + stashed_file + '"')
+            shutil.copy2(original_file, stashed_file)
             return file
 
     def remove(self, filename, sha1sum):
@@ -83,7 +85,13 @@ class FileStash(object):
         file = self.get(filename, sha1sum)
         stashed_file = file.get_full_path()
         self.remove_from_index(filename, sha1sum)
-        local('rm "' + stashed_file + '"')
+        os.remove(stashed_file)
+
+    def nuke(self):
+        """ Erase all files from stash """
+        shutil.rmtree(self.root_path)
+        os.mkdir(self.root_path)
+        self.build_index()
 
 class StashedFileUnitTest(unittest.TestCase):
 
@@ -110,24 +118,24 @@ class FileStashUnitTest(unittest.TestCase):
     def setUp(self):
 
         # Construct a file-stash
-        local('mkdir unittest')
-        local('mkdir unittest/file_stash')
+        os.mkdir('unittest')
+        os.mkdir('unittest/file_stash')
+
+    def test(self):
 
         # Add two files to the stash
-        file_stash = FileStash('unittest/file_stash')
+        file_stash_init = FileStash('unittest/file_stash')
         local('echo "Hello World 1" > unittest/' + self.file1_name)
         local('echo "Hello World 2" > unittest/' + self.file2_name)
-        file_stash.add('unittest', self.file1_name)
-        file_stash.add('unittest', self.file2_name)
-        local('rm unittest/' + self.file1_name)
-        local('rm unittest/' + self.file2_name)
+        file_stash_init.add('unittest', self.file1_name)
+        file_stash_init.add('unittest', self.file2_name)
+        os.remove('unittest/' + self.file1_name)
+        os.remove('unittest/' + self.file2_name)
 
         # Create three temporary files outside of the stash
         local('echo "Hello World 3" > unittest/' + self.file3_name)
         local('echo "Hello World 4" > unittest/' + self.file4_name)
         local('echo "Hello World 3" > unittest/' + self.file5_name)
-
-    def test(self):
 
         file_stash = FileStash('unittest/file_stash')
         # file1 and file2 should already exist in the file stash
@@ -174,9 +182,12 @@ class FileStashUnitTest(unittest.TestCase):
         self.assertNotEquals(file_stash.get(self.file1_name, self.file1_sha1sum), None)
         self.assertNotEquals(file_stash.get(self.file2_name, self.file2_sha1sum), None)
 
+        # Remove all files from stash
+        file_stash.nuke()
+        self.assertEquals(len(file_stash.files), 0)
 
     def tearDown(self):
-        local('rm -rf unittest')
+        shutil.rmtree('unittest')
 
 if __name__ == '__main__':
     unittest.main()
