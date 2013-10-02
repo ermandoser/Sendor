@@ -24,34 +24,66 @@ class FileStash(object):
         self.build_index()
 
     def build_index(self):
+        """ Create an index for all the files in the stash directory tree """
         self.files = {}
         
         for root, dirs, filenames in os.walk(self.root_path):
             for filename in filenames:
                 sha1sum = root[-40:]
-                file = StashedFile(self.root_path, filename, sha1sum)
-                self.files[sha1sum] = file
+                self.add_to_index(filename, sha1sum)
 
-    def get(self, sha1sum):
-        return self.files.get(sha1sum)
+    def add_to_index(self, filename, sha1sum):
+        """ Add a new file to the index
+            The file should not yet exist in the index
+            The file should be present in the stash directory tree
+            """
+        file = StashedFile(self.root_path, filename, sha1sum)
+        self.files[sha1sum + ' ' + filename] = file
+        return file
+
+    def remove_from_index(self, filename, sha1sum):
+        """ Remove a file from the index
+            The file should exist in the index
+            The file will not be removed from the stash directory tree
+            """
+        del self.files[sha1sum + ' ' + filename]
+
+    def get(self, filename, sha1sum):
+        """ Locate the index entry for a file, or return None if it does not exist """
+        return self.files.get(sha1sum + ' ' + filename)
 
     def add(self, original_path, filename):
+        """ Add a file to the stash
+            The file should not exist in the index nor stash directory tree
+            The file will be copied into the stash directory tree, and added to the index
+            """
         original_file = os.path.join(original_path, filename)
         
         sha1sum = local('sha1sum -b ' + original_file, capture = True)[:40]
-        file = self.get(sha1sum)
+        file = self.get(filename, sha1sum)
         if file:
             return file
         else:
 
-            file = StashedFile(self.root_path, filename, sha1sum)
+            file = self.add_to_index(filename, sha1sum)
             stashed_file = file.get_full_path()
 
-            local('mkdir ' + os.path.join(self.root_path, sha1sum))
+            if not os.path.exists(os.path.join(self.root_path, sha1sum)):
+                local('mkdir ' + os.path.join(self.root_path, sha1sum))
+
             local('cp "' + original_file + '" "' + stashed_file + '"')
-            
-            self.files[sha1sum] = file
             return file
+
+    def remove(self, filename, sha1sum):
+        """ Remove a file from the stash
+            The file should exist in the index and stash directory tree
+            The file will be removed from the index and stash directory tree
+            """
+
+        file = self.get(filename, sha1sum)
+        stashed_file = file.get_full_path()
+        self.remove_from_index(filename, sha1sum)
+        local('rm "' + stashed_file + '"')
 
 class StashedFileUnitTest(unittest.TestCase):
 
@@ -64,33 +96,84 @@ class StashedFileUnitTest(unittest.TestCase):
 
 class FileStashUnitTest(unittest.TestCase):
 
+    file1_name = 'hello1.txt'
     file1_sha1sum = 'a2abbbf0d432a8097fd7a4d421cc91881309cda2'
+    file2_name = 'hello2.txt'
     file2_sha1sum = 'dca028d53b41169f839eeefe489b02e0aa7b5d27'
+    file3_name = 'hello3.txt'
+    file3_sha1sum = 'ca44a076d1ac49f10ebb55949a9a16805af69bcd'
+    file4_name = 'hello1.txt'
+    file4_sha1sum = '77b8b233f03f1720c0642f6e1ce395fbfe0322ed'
+    file5_name = 'hello5.txt'
+    file5_sha1sum = 'ca44a076d1ac49f10ebb55949a9a16805af69bcd'
 
     def setUp(self):
+
+        # Construct a file-stash
         local('mkdir unittest')
         local('mkdir unittest/file_stash')
-        local('mkdir unittest/file_stash/' + self.file1_sha1sum)
-        local('echo "Hello World 1" > unittest/file_stash/' + self.file1_sha1sum + '/hello1.txt')
-        local('mkdir unittest/file_stash/' + self.file2_sha1sum)
-        local('echo "Hello World 2" > unittest/file_stash/' + self.file2_sha1sum + '/hello2.txt')
 
-        local('echo "Hello World 3" > unittest/hello3.txt')
-        local('echo "Hello World 4" > unittest/hello1.txt')
+        # Add two files to the stash
+        file_stash = FileStash('unittest/file_stash')
+        local('echo "Hello World 1" > unittest/' + self.file1_name)
+        local('echo "Hello World 2" > unittest/' + self.file2_name)
+        file_stash.add('unittest', self.file1_name)
+        file_stash.add('unittest', self.file2_name)
+        local('rm unittest/' + self.file1_name)
+        local('rm unittest/' + self.file2_name)
+
+        # Create three temporary files outside of the stash
+        local('echo "Hello World 3" > unittest/' + self.file3_name)
+        local('echo "Hello World 4" > unittest/' + self.file4_name)
+        local('echo "Hello World 3" > unittest/' + self.file5_name)
 
     def test(self):
 
         file_stash = FileStash('unittest/file_stash')
+        # file1 and file2 should already exist in the file stash
         self.assertEquals(len(file_stash.files), 2)
 
-        file3 = file_stash.add('unittest', 'hello3.txt')
-        file4 = file_stash.add('unittest', 'hello1.txt')
+        # Files not in the stash should not yield any hits
+        self.assertEquals(file_stash.get('12345678', '12345678'), None)
 
-        self.assertNotEquals(file_stash.get(self.file1_sha1sum), None)
-        self.assertNotEquals(file_stash.get(self.file2_sha1sum), None)
-        self.assertNotEquals(file_stash.get(file3.sha1sum), None)
-        self.assertNotEquals(file_stash.get(file4.sha1sum), None)
-        self.assertEquals(file_stash.get('12345678'), None)
+        # file4 has the same filename as file1
+        # file3 and file5 have different names but identical content
+
+        file_stash.add('unittest', self.file3_name)
+        file_stash.add('unittest', self.file4_name)
+        file_stash.add('unittest', self.file5_name)
+
+        # Validate that all files have been added to the stash
+        self.assertNotEquals(file_stash.get(self.file1_name, self.file1_sha1sum), None)
+        self.assertNotEquals(file_stash.get(self.file2_name, self.file2_sha1sum), None)
+        self.assertNotEquals(file_stash.get(self.file3_name, self.file3_sha1sum), None)
+        self.assertNotEquals(file_stash.get(self.file4_name, self.file4_sha1sum), None)
+        self.assertNotEquals(file_stash.get(self.file5_name, self.file5_sha1sum), None)
+
+        # There should be 5 files in the stash both before and after re-indexing
+        self.assertEquals(len(file_stash.files), 5)
+        file_stash.build_index()
+        self.assertEquals(len(file_stash.files), 5)
+
+        # Remove two files with identical content
+        file_stash.remove(self.file3_name, self.file3_sha1sum)
+        self.assertEquals(file_stash.get(self.file3_name, self.file3_sha1sum), None)
+        self.assertNotEquals(file_stash.get(self.file5_name, self.file5_sha1sum), None)
+        file_stash.remove(self.file5_name, self.file5_sha1sum)
+        self.assertEquals(file_stash.get(self.file3_name, self.file3_sha1sum), None)
+        self.assertEquals(file_stash.get(self.file5_name, self.file5_sha1sum), None)
+
+        # Remove one file which has identical name to another file 
+        file_stash.remove(self.file4_name, self.file4_sha1sum)
+        self.assertEquals(file_stash.get(self.file4_name, self.file4_sha1sum), None)
+        self.assertNotEquals(file_stash.get(self.file1_name, self.file1_sha1sum), None)
+
+        # At this point, only the first two files should remain in the stash
+        file_stash.build_index()
+        self.assertEquals(len(file_stash.files), 2)
+        self.assertNotEquals(file_stash.get(self.file1_name, self.file1_sha1sum), None)
+        self.assertNotEquals(file_stash.get(self.file2_name, self.file2_sha1sum), None)
+
 
     def tearDown(self):
         local('rm -rf unittest')
