@@ -3,7 +3,7 @@ import json
 import os
 import unittest
 
-from tasks import ScpStashedFileTask
+from tasks import SftpStashedFileTask
 
 targets = []
 
@@ -20,7 +20,7 @@ def create_distribution_tasks(get_file, filename, ids):
         else:
             target = targets[id]
             destination_file = filename
-            task = ScpStashedFileTask(get_file, destination_file, target)
+            task = SftpStashedFileTask(get_file, destination_file, target)
             tasks.append(task)
 
     return tasks

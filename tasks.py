@@ -1,13 +1,16 @@
 
+import json
 import os
-import unittest
+import shutil
 import time
+import unittest
 
+import paramiko
 import fabric.api
-
 from fabric.api import local
 
 from SendorQueue import SendorTask
+from FileStash import FileStash, StashedFile
 
 class FabricTask(SendorTask):
     
@@ -101,10 +104,41 @@ class ScpStashedFileTask(FabricTask):
     def string_description(self):
         return "Distribute to " + self.target['user']
 
+class SftpStashedFileTask(FabricTask):
+
+    def __init__(self, get_file, filename, target):
+        super(SftpStashedFileTask, self).__init__()
+        self.get_file = get_file
+        self.filename = filename
+        self.target = target
+        self.transferred = None
+
+    def run(self):
+
+        def cb(transferred, total):
+            self.transferred = transferred
+            self.total = total
+
+        source_path = self.get_file().get_full_path()
+
+        key_file = self.target['private_key_file']
+        transport = paramiko.Transport((self.target['host'], int(self.target['port'])))
+        transport.connect(username = self.target['user'], password = 'apa')
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        sftp.put(source_path, self.filename, callback=cb)
+
+    def string_description(self):
+        if self.transferred:
+            ratio = int(100 * self.transferred / self.total)
+            return "Distribute to " + self.target['user'] + " - " + str(ratio) + "% sent"
+        else:
+            return "Distribute to " + self.target['user']
+
+
 class CopyFileTaskUnitTest(unittest.TestCase):
 
     def setUp(self):
-        local('mkdir unittest')
+        os.mkdir('unittest')
         local('echo abc123 > unittest/source')
 
     def test_copy_file_task(self):
@@ -115,7 +149,40 @@ class CopyFileTaskUnitTest(unittest.TestCase):
         self.assertTrue(os.path.exists('unittest/target'))
 
     def tearDown(self):
-        local('rm -rf unittest')
+        shutil.rmtree('unittest')
+
+class SftpFileTaskUnitTest(unittest.TestCase):
+
+    root_path = 'unittest'
+    upload_root = root_path + '/upload'
+    file_stash_root = root_path + '/FileStash'
+    file_name = 'testfile'
+
+    def setUp(self):
+        os.mkdir(self.root_path)
+        os.mkdir(self.upload_root)
+        os.mkdir(self.file_stash_root)
+        self.file_stash = FileStash(self.file_stash_root)
+
+        local('echo abc123 > ' + os.path.join(self.upload_root, self.file_name))
+        self.file = self.file_stash.add(self.upload_root, self.file_name)
+
+    def test_copy_file_task(self):
+
+        def get_file():
+            return self.file_stash.get(self.file_name, self.file.sha1sum)
+
+        targets = {}
+        with open('remote_machine_targets.json') as file:
+            targets = json.load(file)
+
+        target = targets['target1']
+
+        task = SftpStashedFileTask(get_file, self.file_name, target)
+        task.run()
+
+    def tearDown(self):
+        shutil.rmtree(self.root_path)
 
 if __name__ == '__main__':
     unittest.main()
