@@ -57,7 +57,7 @@ def create_ui():
 	def upload():
 		if request.method == 'GET':
 			return Response(render_template('upload_form.html',
-							targets = LocalMachineTargets.get_targets()))
+							targets = RemoteMachineTargets.get_targets()))
 		elif request.method == 'POST':
 
 			target_ids = request.form.getlist('target')
