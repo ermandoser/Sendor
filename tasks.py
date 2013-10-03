@@ -122,8 +122,9 @@ class SftpStashedFileTask(FabricTask):
         source_path = self.get_file().get_full_path()
 
         key_file = self.target['private_key_file']
+        key = paramiko.RSAKey.from_private_key_file(key_file)
         transport = paramiko.Transport((self.target['host'], int(self.target['port'])))
-        transport.connect(username = self.target['user'], password = 'apa')
+        transport.connect(username = self.target['user'], pkey = key)
         sftp = paramiko.SFTPClient.from_transport(transport)
         sftp.put(source_path, self.filename, callback=cb)
 
