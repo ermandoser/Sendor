@@ -83,6 +83,24 @@ class CopyStashedFileTask(FabricTask):
         return "Copy to " + self.target
 
 
+class ScpStashedFileTask(FabricTask):
+
+    def __init__(self, get_file, filename, target):
+        super(ScpStashedFileTask, self).__init__()
+        self.get_file = get_file
+        self.filename = filename
+        self.target = target
+
+    def run(self):
+        source_path = self.get_file().get_full_path()
+        target_path = self.target['user'] + '@' + self.target['host'] + ":" + self.filename
+        target_port = self.target['port']
+        key_file = self.target['private_key_file']
+        self.fabric_local('scp ' + ' -P ' + target_port + ' -i ' + key_file + ' ' + source_path + ' ' + target_path)
+
+    def string_description(self):
+        return "Distribute to " + self.target['user']
+
 class CopyFileTaskUnitTest(unittest.TestCase):
 
     def setUp(self):

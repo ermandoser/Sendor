@@ -13,6 +13,7 @@ from FileStash import FileStash
 from tasks import StashFileTask
 
 import LocalMachineTargets
+import RemoteMachineTargets
 
 logger = logging.getLogger('main')
 
@@ -66,7 +67,7 @@ def create_ui():
 			file.save(upload_file_full_path)
 
 			stash_file_task = StashFileTask(UPLOAD_FOLDER, filename, g_file_stash)
-			distribute_file_tasks = LocalMachineTargets.create_distribution_tasks(stash_file_task.get_file_func(), filename, target_ids)
+			distribute_file_tasks = RemoteMachineTargets.create_distribution_tasks(stash_file_task.get_file_func(), filename, target_ids)
 			job = SendorJob([stash_file_task] + distribute_file_tasks)
 
 			g_sendor_queue.add(job)
@@ -97,6 +98,7 @@ def main(host, port):
 	logger.info("Starting wsgi server")
 
 	LocalMachineTargets.load('local_machine_targets.json')
+	RemoteMachineTargets.load('remote_machine_targets.json')
 
 	root.run(host = host, port = port, debug = True)
 

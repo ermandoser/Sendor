@@ -1,0 +1,23 @@
+{
+	"target1" : {
+		"name" : "target 1",
+		"user" : "ssh_target1",
+		"host" : "localhost",
+		"port" : "22",
+		"private_key_file" : "test/ssh_target1.private_key"
+	},
+	"target2" : {
+		"name" : "target 2",
+		"user" : "ssh_target2",
+		"host" : "localhost",
+		"port" : "22",
+		"private_key_file" : "test/ssh_target2.private_key"
+	},
+	"target3" : {
+		"name" : "target 3",
+		"user" : "ssh_target3",
+		"host" : "localhost",
+		"port" : "22",
+		"private_key_file" : "test/ssh_target3.private_key"
+	}
+}
