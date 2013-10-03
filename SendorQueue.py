@@ -108,6 +108,7 @@ class SendorQueue():
                         task.run()
                         task.completed()
                     except :
+                        task.append_details(traceback.format_exc())
                         task.failed()
                         self.cancel_current_job()
                         traceback.print_exc()
