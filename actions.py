@@ -2,12 +2,14 @@
 import json
 import os
 import shutil
+import threading
 import time
 import unittest
 
 import paramiko
 import fabric.api
-from fabric.api import local
+from fabric.api import local, run, settings
+import fabric.network
 
 from SendorQueue import SendorTask, SendorAction
 
@@ -15,16 +17,25 @@ class FabricAction(SendorAction):
 
 	def __init__(self, task):
 		super(FabricAction, self).__init__(task)
-    
+
 	def fabric_local(self, command):
-		with fabric.api.settings(warn_only = True):
-			result = local(command, capture = True)
+		with fabric.api.settings(warn_only=True):
+			result = local(command, capture=True)
 			self.task.append_details(command)
 			self.task.append_details(result)
 			self.task.append_details(result.stderr)
 			if result.failed:
 				raise Exception("Fabric command failed")
 
+	def fabric_remote(self, command):
+		with fabric.api.settings(warn_only=True):
+			result = run(command)
+			self.task.append_details(command)
+			self.task.append_details(result)
+			self.task.append_details(result.stderr)
+			if result.failed:
+				raise Exception("Fabric command failed")
+				
 class CopyFileAction(FabricAction):
 
 	def __init__(self, task, source, target):
@@ -87,6 +98,108 @@ class SftpSendFileAction(FabricAction):
 		else:
 			return "Distribute to " + self.target['user']
 
+class ParallelScpSendFileAction(FabricAction):
+
+	def __init__(self, task, source, tempdir, filename, target):
+		super(ParallelScpSendFileAction, self).__init__(task)
+		self.source = source
+		self.filename = filename
+		self.tempdir = tempdir
+		self.target = target
+		self.transferred = None
+
+	def run(self):
+
+		num_parallel_transfers = int(self.target['max_parallel_transfers'])
+		temp_filename_prefix = 'chunk_'
+		temp_file_prefix = os.path.join(self.tempdir, temp_filename_prefix)
+		
+		self.fabric_local('split -d -n ' + str(num_parallel_transfers) + ' ' + self.source + ' ' + temp_file_prefix)
+		
+		def transfer_file_thread(self, tempfile, targetfile, target):
+			source_path = tempfile
+			target_path = self.target['user'] + '@' + self.target['host'] + ":" + targetfile
+			target_port = self.target['port']
+			key_file = self.target['private_key_file']
+			self.fabric_local('scp ' + ' -B -P ' + target_port + ' -i ' + key_file + ' ' + source_path + ' ' + target_path)
+				
+		threads = []
+			
+		for i in range(num_parallel_transfers):
+			temp_filename_suffix = u'%02d' % i
+			tempfile = temp_file_prefix + temp_filename_suffix
+			targetfile = temp_filename_prefix + temp_filename_suffix
+			thread = threading.Thread(target=transfer_file_thread, args=(self, tempfile, targetfile, self.target))
+			thread.start()
+			threads.append(thread)
+
+		for thread in threads:
+			thread.join()
+
+		host_string = self.target['user'] + '@' + self.target['host'] + ':' + self.target['port']
+		with settings(host_string=host_string, key_filename=self.target['private_key_file']):
+			print host_string
+			self.fabric_remote('cat ' + temp_filename_prefix + '?? > ' + self.filename)
+			self.fabric_remote('rm ' + temp_filename_prefix + '??')
+
+	def string_description(self):
+		if self.transferred:
+			ratio = int(100 * self.transferred / self.total)
+			return "Distribute to " + self.target['user'] + " - " + str(ratio) + "% sent"
+		else:
+			return "Distribute to " + self.target['user']
+
+class ParallelSftpSendFileAction(FabricAction):
+
+	def __init__(self, task, source, tempdir, filename, target):
+		super(ParallelSftpSendFileAction, self).__init__(task)
+		self.source = source
+		self.filename = filename
+		self.tempdir = tempdir
+		self.target = target
+		self.transferred = None
+
+	def run(self):
+
+		num_parallel_transfers = int(self.target['max_parallel_transfers'])
+		temp_filename_prefix = 'chunk_'
+		temp_file_prefix = os.path.join(self.tempdir, temp_filename_prefix)
+		
+		self.fabric_local('split -d -n ' + str(num_parallel_transfers) + ' ' + self.source + ' ' + temp_file_prefix)
+		
+		def transfer_file_thread(tempfile, targetfile, target):
+			key_file = target['private_key_file']
+			key = paramiko.RSAKey.from_private_key_file(key_file)
+			transport = paramiko.Transport((target['host'], int(target['port'])))
+			transport.connect(username = target['user'], pkey = key)
+			sftp = paramiko.SFTPClient.from_transport(transport)
+			sftp.put(tempfile, targetfile, callback=None)
+				
+		threads = []
+			
+		for i in range(num_parallel_transfers):
+			temp_filename_suffix = u'%02d' % i
+			tempfile = temp_file_prefix + temp_filename_suffix
+			targetfile = temp_filename_prefix + temp_filename_suffix
+			thread = threading.Thread(target=transfer_file_thread, args=(tempfile, targetfile, self.target))
+			thread.start()
+			threads.append(thread)
+
+		for thread in threads:
+			thread.join()
+
+		host_string = self.target['user'] + '@' + self.target['host'] + ':' + self.target['port']
+		with settings(host_string=host_string, key_filename=self.target['private_key_file']):
+			print host_string
+			self.fabric_remote('cat ' + temp_filename_prefix + '?? > ' + self.filename)
+			self.fabric_remote('rm ' + temp_filename_prefix + '??')
+
+	def string_description(self):
+		if self.transferred:
+			ratio = int(100 * self.transferred / self.total)
+			return "Distribute to " + self.target['user'] + " - " + str(ratio) + "% sent"
+		else:
+			return "Distribute to " + self.target['user']
 
 class CopyFileActionUnitTest(unittest.TestCase):
 
@@ -129,5 +242,34 @@ class SftpSendFileActionUnitTest(unittest.TestCase):
 	def tearDown(self):
 		shutil.rmtree(self.root_path)
 
+class ParallelSftpSendFileActionUnitTest(unittest.TestCase):
+
+	root_path = 'unittest'
+	upload_root = root_path + '/upload'
+	temp_path = root_path + '/temp'
+	file_name = 'testfile'
+	source_path = upload_root + '/' + file_name
+
+	def setUp(self):
+		os.mkdir(self.root_path)
+		os.mkdir(self.upload_root)
+		os.mkdir(self.temp_path)
+		local('echo abc123 > ' + self.upload_root + '/' + self.file_name)
+
+	def test_parallel_sftp_send_file_action(self):
+
+		targets = {}
+		with open('test/ssh_localhost_targets.json') as file:
+			targets = json.load(file)
+
+		target = targets['ssh_localhost_target3']
+
+		task = ParallelSftpSendFileAction(SendorTask(), self.source_path, self.temp_path, self.file_name, target)
+		task.run()
+
+	def tearDown(self):
+		shutil.rmtree(self.root_path)
+
 if __name__ == '__main__':
 	unittest.main()
+	fabric.network.disconnect_all()

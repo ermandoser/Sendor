@@ -10,6 +10,8 @@ import target_distribution_methods
 import target_distribution_method_cp
 import target_distribution_method_scp
 import target_distribution_method_sftp
+import target_distribution_method_parallel_scp
+import target_distribution_method_parallel_sftp
 
 class Targets(object):
 
