@@ -8,17 +8,7 @@
   <input type="file" name="file">
   <br>
 
-  <legend>2. Choose RSPs</legend>
-
-  {% for id, parameters in targets.iteritems() %}
-  {% set name = parameters['name'] %}
-  <label class="checkbox">
-    <input type="checkbox" name="target" value="{{ id }}" checked>{{ name }}
-  </label>
-  {% endfor %}
-
-  <br>
-  <legend>3. Fire in the hole!</legend>
+  <legend>2. Begin upload!</legend>
   <input type="submit" action="upload">
 </form>
 

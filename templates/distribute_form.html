@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<form action="" method=post enctype=multipart/form-data>
+
+  <legend>1. Choose a file</legend>
+  {% for id, parameters in files.iteritems() %}
+  {% set name = parameters['name'] %}
+  <label class="radio">
+    <input type="radio" name="file" value="{{ id }}">{{ name }}
+  </label>
+  {% endfor %}
+  <br>
+
+  <legend>2. Choose targets</legend>
+
+  {% for id, parameters in targets.iteritems() %}
+  {% set name = parameters['name'] %}
+  <label class="checkbox">
+    <input type="checkbox" name="target" value="{{ id }}" checked>{{ name }}
+  </label>
+  {% endfor %}
+
+  <br>
+  <legend>3. Fire in the hole!</legend>
+  <input type="submit" action="upload">
+</form>
+
+{% endblock %}

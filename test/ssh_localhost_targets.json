@@ -1,0 +1,26 @@
+{
+	"ssh_localhost_target1" : {
+		"name" : "SSH localhost target 1 (SCP)",
+		"user" : "ssh_localhost_target1",
+		"host" : "localhost",
+		"port" : "22",
+		"private_key_file" : "/home/vagrant/ssh_localhost_target1.private_key",
+		"distribution_method" : "scp"
+	},
+	"ssh_localhost_target2" : {
+		"name" : "SSH localhost target 2 (SFTP)",
+		"user" : "ssh_localhost_target2",
+		"host" : "localhost",
+		"port" : "22",
+		"private_key_file" : "/home/vagrant/ssh_localhost_target2.private_key",
+		"distribution_method" : "sftp"
+	},
+	"ssh_localhost_target3" : {
+		"name" : "SSH localhost target 3 (SFTP)",
+		"user" : "ssh_localhost_target3",
+		"host" : "localhost",
+		"port" : "22",
+		"private_key_file" : "/home/vagrant/ssh_localhost_target3.private_key",
+		"distribution_method" : "sftp"
+	}
+}

@@ -94,7 +94,7 @@ class FileStash(object):
         shutil.rmtree(self.root_path)
         os.mkdir(self.root_path)
         self.build_index()
-
+		
 class StashedFileUnitTest(unittest.TestCase):
 
     def test_file(self):

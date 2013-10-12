@@ -1,0 +1,17 @@
+{
+	"target1" : {
+		"name" : "local machine target 1",
+		"directory" : "test/local_machine_targets/targetdir1",
+		"distribution_method" : "cp"
+	},
+	"target2" : {
+		"name" : "local machine target 2",
+		"directory" : "test/local_machine_targets/targetdir2",
+		"distribution_method" : "cp"
+	},
+	"target3" : {
+		"name" : "local machine target 3",
+		"directory" : "test/local_machine_targets/targetdir3",
+		"distribution_method" : "cp"
+	}
+}
