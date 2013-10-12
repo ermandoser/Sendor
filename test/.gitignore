@@ -1,1 +1,11 @@
+file_stash/*
+!file_stash/.gitkeep
+upload/*
+!upload/.gitkeep
+local_machine_targets/targetdir1/*
+!local_machine_targets/targetdir1/.gitkeep
+local_machine_targets/targetdir2/*
+!local_machine_targets/targetdir2/.gitkeep
+local_machine_targets/targetdir3/*
+!local_machine_targets/targetdir3/.gitkeep
 *.private_key
