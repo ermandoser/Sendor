@@ -1,6 +1,13 @@
 
 {% macro FileStash(files) %}
-<table class="table">
+<table class="table table-bordered table-hover">
+	<thead>
+		<tr>
+			<td> Name </td>
+			<td> Size </td>
+			<td> Upload date</td>
+		</tr>
+	</thead>
 	<tbody>
 		{% for file in files %}
 			{% set original_filename = file['original_filename'] %}
