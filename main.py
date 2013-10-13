@@ -30,6 +30,12 @@ def create_ui(upload_folder):
 	@ui_app.route('/')
 	@ui_app.route('/index.html', methods = ['GET'])
 	def index():
+
+		file_stash = sorted(g_file_stash.files.values(), cmp = lambda x, y: cmp(x.timestamp, y.timestamp))
+		latest_uploaded_file = None
+		if len(file_stash) != 0:
+			latest_uploaded_file = file_stash[-1].to_json()
+	
 		pending_jobs = []
 		for job in reversed(list(g_sendor_queue.pending_jobs.queue)):
 			pending_jobs.append(job.progress())
@@ -43,9 +49,21 @@ def create_ui(upload_folder):
 			past_jobs.append(job.progress())
 
 		return render_template('index.html',
-				       pending_jobs = pending_jobs,
-				       current_job = current_job,
-				       past_jobs = past_jobs)
+			file_stash = [latest_uploaded_file],
+			pending_jobs = pending_jobs,
+			current_job = current_job,
+			past_jobs = past_jobs)
+
+	@ui_app.route('/file_stash.html', methods = ['GET'])
+	def file_stash():
+
+		file_stash = sorted(g_file_stash.files.values(), cmp = lambda x, y: cmp(x.timestamp, y.timestamp))
+		file_stash_contents = []
+		for file in file_stash:
+			file_stash_contents.append(file.to_json())
+	
+		return render_template('file_stash.html',
+			file_stash = file_stash_contents)
 
 	@ui_app.route('/cancel.html', methods = ['GET'])
 	def cancel():

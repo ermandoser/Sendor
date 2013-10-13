@@ -1,56 +1,30 @@
 
 {% extends "base.html" %}
 
-{% macro SendorJob(tasks) %}
-<table class="table table-striped">
-  <tbody>
-    {% for task in tasks %}
-    {% set description = task['description'] %}
-    {% set state = task['state'] %}
-    {% set details = task['details'] %}
-    <tr>
-      <td>
-	<div>
-	  {{description}}
-	</div>
-	<div>
-	  {% if details != "" %}
-	  <pre>{{details}}</pre>
-	  {% endif %}
-	</div>
-      </td>
-      <td>
-	{% if state == 'not_started' %}
-	<button type="button" disabled="disabled" class="btn btn-default">Not started</button>
-	{% elif state == 'in_progress' %}
-	<button type="button" disabled="disabled" class="btn btn-warning">In progress</button>
-	{% elif state == 'completed' %}
-	<button type="button" disabled="disabled" class="btn btn-success">Done</button>
-	{% elif state == 'failed' %}
-	<button type="button" disabled="disabled" class="btn btn-danger">Failed</button>	
-	{% elif state == 'canceled' %}
-	<button type="button" disabled="disabled" class="btn btn-inverse">Canceled</button>	
-	{% else %}
-	Error: Unknown state!
-	{% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% endmacro %}
+{% import "SendorJob.html" as SendorJob %}
+{% import "FileStash.html" as FileStash %}
 
 {% block content %}
 
 <a href="upload.html" class="btn btn-default">Upload file</a>
 <a href="distribute.html" class="btn btn-default">Distribute file</a>
+<a href="file_stash.html" class="btn btn-default">View uploaded files</a>
 <br>
 
+<div>
+<h2> Latest uploaded file </h2>
+{% if file_stash %}
+{{ FileStash.FileStash(file_stash) }}
+{% else %}
+ apa
+{% endif %}
+
+</div>
 
 <h2> Pending jobs </h2>
 <div>
 {% for job in pending_jobs %}
-{{ SendorJob(job) }}
+{{ SendorJob.SendorJob(job) }}
 {% endfor %}
 
 <h2> Current job </h2>
@@ -59,13 +33,13 @@
 
 <a href="cancel.html" class="btn btn-primary">Cancel this job</a>
 
-{{ SendorJob(current_job) }}
+{{ SendorJob.SendorJob(current_job) }}
 {% endif %}
 
 <h2> Past jobs </h2>
 
 {% for job in past_jobs %}
-{{ SendorJob(job) }}
+{{ SendorJob.SendorJob(job) }}
 {% endfor %}
 
 {% endblock %}

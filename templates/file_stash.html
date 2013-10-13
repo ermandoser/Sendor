@@ -1,0 +1,16 @@
+
+{% extends "base.html" %}
+
+{% import "FileStash.html" as FileStash %}
+
+{% block content %}
+
+<a href="index.html" class="btn btn-default">Back to main</a>
+<br>
+
+<div>
+<h2> Uploaded files </h2>
+{{ FileStash.FileStash(file_stash) }}
+</div>
+
+{% endblock %}

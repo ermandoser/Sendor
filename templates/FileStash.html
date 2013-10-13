@@ -1,0 +1,23 @@
+
+{% macro FileStash(files) %}
+<table class="table">
+	<tbody>
+		{% for file in files %}
+			{% set original_filename = file['original_filename'] %}
+			{% set size = file['size'] %}
+			{% set timestamp = file['timestamp'] %}
+			<tr>
+				<td>
+					{{ original_filename }}
+				</td>
+				<td>
+					{{ size }}
+				</td>
+				<td>
+					{{ timestamp }}
+				</td>
+			</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% endmacro %}
