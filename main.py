@@ -76,9 +76,7 @@ def create_ui(upload_folder):
 		if request.method == 'GET':
 			files = {}
 			for id, file in g_file_stash.files.items():
-				files[id] = {
-					'name' : file.filename,
-				}
+				files[id] = file.to_json()
 		
 			return Response(render_template('distribute_form.html',
 							files = files,
@@ -87,13 +85,13 @@ def create_ui(upload_folder):
 		elif request.method == 'POST':
 
 			target_ids = request.form.getlist('target')
-			file = request.form.get('file')
-			stashed_file = g_file_stash.files[file] 
+			id = request.form.get('file')
+			stashed_file = g_file_stash.get(id)
 
 			distribute_file_tasks = []
 			for id in target_ids:
-				distribute_file_task = DistributeFileTask(stashed_file.filename, id)
-				distribute_file_action = g_targets.create_distribution_action(distribute_file_task, stashed_file.get_full_path(), stashed_file.filename, id)
+				distribute_file_task = DistributeFileTask(stashed_file.original_filename, id)
+				distribute_file_action = g_targets.create_distribution_action(distribute_file_task, stashed_file.full_path_filename, stashed_file.original_filename, id)
 				distribute_file_task.actions.append(distribute_file_action)
 				distribute_file_tasks.append(distribute_file_task)
 

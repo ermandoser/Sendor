@@ -6,9 +6,11 @@
 
   <legend>1. Choose a file</legend>
   {% for id, parameters in files.iteritems() %}
-  {% set name = parameters['name'] %}
+  {% set original_filename = parameters['original_filename'] %}
+  {% set size = parameters['size'] %}
+  {% set timestamp = parameters['timestamp'] %}
   <label class="radio">
-    <input type="radio" name="file" value="{{ id }}">{{ name }}
+    <input type="radio" name="file" value="{{ id }}">{{ original_filename }} - {{ size }} bytes - {{ timestamp }}
   </label>
   {% endfor %}
   <br>

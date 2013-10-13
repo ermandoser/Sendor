@@ -1,16 +1,7 @@
 
-import json
-import os
-import shutil
-import time
-import unittest
-
-import paramiko
-import fabric.api
-from fabric.api import local
+import datetime
 
 from SendorQueue import SendorTask
-from FileStash import FileStash
 
 class StashFileTask(SendorTask):
 
@@ -21,7 +12,7 @@ class StashFileTask(SendorTask):
         self.file_stash = file_stash
 
     def run(self):
-        self.file_stash.add(self.path, self.source)
+        self.file_stash.add(self.path, self.source, datetime.datetime.utcnow())
 
     def string_description(self):
         return "Add file " + self.source + " to stash"
