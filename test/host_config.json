@@ -3,5 +3,10 @@
 	"port" : "5000",
 	
 	"upload_folder" : "test/upload",
-	"file_stash_folder" : "test/file_stash"
+	"file_stash_folder" : "test/file_stash",
+	
+	"logging" : {
+		"output" : "stdout",
+		"log_folder" : "test/logs"
+	}
 }

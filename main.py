@@ -1,6 +1,7 @@
 
 import json
 import logging
+import logging.handlers
 import sys
 import os
 
@@ -109,8 +110,8 @@ def create_ui(upload_folder):
 			distribute_file_tasks = []
 			for id in target_ids:
 				distribute_file_task = DistributeFileTask(stashed_file.original_filename, id)
-				distribute_file_action = g_targets.create_distribution_action(distribute_file_task, stashed_file.full_path_filename, stashed_file.original_filename, id)
-				distribute_file_task.actions.append(distribute_file_action)
+				distribute_file_actions = g_targets.create_distribution_actions(distribute_file_task, stashed_file.full_path_filename, stashed_file.original_filename, id)
+				distribute_file_task.actions.extend(distribute_file_actions)
 				distribute_file_tasks.append(distribute_file_task)
 
 			job = SendorJob(distribute_file_tasks)
@@ -129,12 +130,29 @@ def load_config(host_config_filename, targets_config_filename):
 	with open(targets_config_filename) as file:
 		g_config['targets'] = json.load(file)
 
+def initialize_logger(settings):
+	filename = 'activity.log'
+
+	if settings['output'] == 'file':
+		file_handler = logging.handlers.TimedRotatingFileHandler(
+			filename=os.path.join(settings['log_folder'], filename),
+			when='midnight',
+			utc=True)
+		formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+		file_handler.setFormatter(formatter)
+
+		root_logger = logging.getLogger()
+		root_logger.setLevel(logging.INFO)
+		root_logger.addHandler(file_handler)
+
 def main(host_config_filename, targets_config_filename):
 	global g_sendor_queue
 	global g_file_stash
 	global g_targets
 
 	load_config(host_config_filename, targets_config_filename)
+
+	initialize_logger(g_config['logging'])
 	
 	host = g_config['host']
 	port = int(g_config['port'])
