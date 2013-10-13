@@ -95,6 +95,12 @@ class SendorTask(object):
 	def append_details(self, string):
 		self.details = self.details + string + "\n"
 
+	def translate_path(self, path):
+		if self.work_directory:
+			return path.replace('{task_work_directory}', self.work_directory)
+		else:
+			return path
+		
 class SendorAction(object):
 
 	def __init__(self, task):
