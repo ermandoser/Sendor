@@ -1,5 +1,7 @@
 
 import datetime
+import dateutil
+import dateutil.parser
 import json
 import os
 import os.path
@@ -84,7 +86,7 @@ class FileStash(object):
 		self.unique_id = 0
 		self.files = {}
 		for file in old_index.values():
-			self.add_to_index(file['original_filename'], file['sha1sum'], file['timestamp'], file['size'])
+			self.add_to_index(file['original_filename'], file['sha1sum'], dateutil.parser.parse(file['timestamp']), file['size'])
 			
 		self.save_index()
 
