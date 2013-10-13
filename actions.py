@@ -100,19 +100,19 @@ class SftpSendFileAction(FabricAction):
 
 class ParallelScpSendFileAction(FabricAction):
 
-	def __init__(self, task, source, tempdir, filename, target):
+	def __init__(self, task, source, filename, target):
 		super(ParallelScpSendFileAction, self).__init__(task)
 		self.source = source
 		self.filename = filename
-		self.tempdir = tempdir
 		self.target = target
 		self.transferred = None
 
 	def run(self):
 
 		num_parallel_transfers = int(self.target['max_parallel_transfers'])
+		temp_directory = self.task.work_directory
 		temp_filename_prefix = 'chunk_'
-		temp_file_prefix = os.path.join(self.tempdir, temp_filename_prefix)
+		temp_file_prefix = os.path.join(temp_directory, temp_filename_prefix)
 		
 		self.fabric_local('split -d -n ' + str(num_parallel_transfers) + ' ' + self.source + ' ' + temp_file_prefix)
 		
@@ -151,19 +151,19 @@ class ParallelScpSendFileAction(FabricAction):
 
 class ParallelSftpSendFileAction(FabricAction):
 
-	def __init__(self, task, source, tempdir, filename, target):
+	def __init__(self, task, source, filename, target):
 		super(ParallelSftpSendFileAction, self).__init__(task)
 		self.source = source
 		self.filename = filename
-		self.tempdir = tempdir
 		self.target = target
 		self.transferred = None
 
 	def run(self):
 
 		num_parallel_transfers = int(self.target['max_parallel_transfers'])
+		temp_directory = self.task.work_directory
 		temp_filename_prefix = 'chunk_'
-		temp_file_prefix = os.path.join(self.tempdir, temp_filename_prefix)
+		temp_file_prefix = os.path.join(temp_directory, temp_filename_prefix)
 		
 		self.fabric_local('split -d -n ' + str(num_parallel_transfers) + ' ' + self.source + ' ' + temp_file_prefix)
 		

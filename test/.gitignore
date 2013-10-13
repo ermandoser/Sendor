@@ -7,6 +7,9 @@ upload/*
 logs/*
 !logs/.gitkeep
 
+queue/*
+!queue/.gitkeep
+
 local_machine_targets/targetdir1/*
 !local_machine_targets/targetdir1/.gitkeep
 local_machine_targets/targetdir2/*

@@ -31,7 +31,6 @@ def create_ui(upload_folder):
 	@ui_app.route('/')
 	@ui_app.route('/index.html', methods = ['GET'])
 	def index():
-
 		file_stash = sorted(g_file_stash.files.values(), cmp = lambda x, y: cmp(x.timestamp, y.timestamp))
 		latest_uploaded_file = None
 		if len(file_stash) != 0:
@@ -158,6 +157,7 @@ def main(host_config_filename, targets_config_filename):
 	port = int(g_config['port'])
 	upload_folder = g_config['upload_folder']
 	file_stash_folder = g_config['file_stash_folder']
+	queue_folder = g_config['queue_folder']
 	
 	root = Flask(__name__)
 
@@ -169,7 +169,7 @@ def main(host_config_filename, targets_config_filename):
 	def index():
 		return redirect('ui')
 
-	g_sendor_queue = SendorQueue()
+	g_sendor_queue = SendorQueue(queue_folder)
 	g_file_stash = FileStash(file_stash_folder)
 	g_targets = Targets(g_config['targets'])
 

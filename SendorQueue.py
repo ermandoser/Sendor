@@ -1,4 +1,6 @@
 
+import os
+import shutil
 import thread
 import unittest
 
@@ -11,6 +13,8 @@ import traceback
 class SendorJob(object):
 
 	def __init__(self, tasks=[]):
+		self.id = None
+		self.work_directory = None
 		self.tasks = tasks
 
 	def started(self):
@@ -29,6 +33,10 @@ class SendorJob(object):
 			
 		return status
 
+	def set_queue_info(self, id, work_directory):
+		self.id = id
+		self.work_directory = work_directory
+		
 class SendorTask(object):
 
 	NOT_STARTED = 0
@@ -41,7 +49,13 @@ class SendorTask(object):
 		self.state = self.NOT_STARTED
 		self.details = ""
 		self.actions = []
+		self.id = None
+		self.work_directory = None
 
+	def set_queue_info(self, id, work_directory):
+		self.id = id
+		self.work_directory = work_directory
+		
 	def started(self):
 		self.state = self.STARTED
 
@@ -88,8 +102,11 @@ class SendorAction(object):
 
 class SendorQueue():
 
-	def __init__(self):
+	unique_id = 0
 
+	def __init__(self, work_directory):
+
+		self.work_directory = work_directory
 		self.pending_jobs = Queue()
 		self.current_job = None
 		self.past_jobs = Queue()
@@ -102,6 +119,10 @@ class SendorQueue():
 			self.current_job_is_canceled = False
 			self.current_job = job
 
+			os.mkdir(job.work_directory)
+			for task in job.tasks:
+				os.mkdir(task.work_directory)
+			
 			job.started()
 
 			for task in job.tasks:
@@ -120,6 +141,8 @@ class SendorQueue():
 						traceback.print_exc()
 
 			job.completed()
+			
+			shutil.rmtree(job.work_directory)
 
 			self.current_job = None
 
@@ -128,7 +151,19 @@ class SendorQueue():
 			self.past_jobs.put(job)
 
 	def add(self, job):
+		job_id = self.unique_id
+		job_work_directory = os.path.join(self.work_directory, 'current_job')
+		job.set_queue_info(id, job_work_directory)
+		self.unique_id = self.unique_id + 1
+
+		task_id = 0
+		for task in job.tasks:
+			task_work_directory = os.path.join(job_work_directory, str(task_id))
+			task.set_queue_info(task_id, task_work_directory)
+			task_id = task_id + 1
+
 		self.pending_jobs.put(job)
+		return job
 
 	def wait(self):
 		self.pending_jobs.join()
@@ -139,8 +174,11 @@ class SendorQueue():
 
 class SendorQueueUnitTest(unittest.TestCase):
 
+	work_directory = 'unittest'
+
 	def setUp(self):
-		self.sendor_queue = SendorQueue()
+		os.mkdir(self.work_directory)
+		self.sendor_queue = SendorQueue(self.work_directory)
 
 	def test_empty_job(self):
 
@@ -216,6 +254,9 @@ class SendorQueueUnitTest(unittest.TestCase):
 		self.sendor_queue.add(job)
 		self.sendor_queue.wait()
 		self.assertEquals(state.state, COMPLETED_JOB)
+
+	def tearDown(self):
+		shutil.rmtree(self.work_directory)
 
 if __name__ == '__main__':
 	unittest.main()
