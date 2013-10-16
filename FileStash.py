@@ -25,7 +25,8 @@ class StashedFile(object):
 			raise Exception(sha1sum + " is not a valid SHA1 hash value")
 			
 	def to_json(self):
-		return { 'original_filename' : self.original_filename,
+		return { 'id' : self.id,
+			'original_filename' : self.original_filename,
 			'sha1sum' : self.sha1sum,
 			'timestamp' : str(self.timestamp),
 			'size' : str(self.size) }

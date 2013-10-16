@@ -1,8 +1,11 @@
 
-{% macro FileStash(files) %}
+{% macro FileStash(files, actions) %}
 <table class="table table-bordered table-hover">
 	<thead>
 		<tr>
+			{% if actions %}
+			<td> Actions </td>
+			{% endif %}
 			<td> Name </td>
 			<td> Size </td>
 			<td> Upload date</td>
@@ -11,9 +14,15 @@
 	<tbody>
 		{% for file in files %}
 			{% set original_filename = file['original_filename'] %}
+			{% set id = file['id'] %}
 			{% set size = file['size'] %}
 			{% set timestamp = file['timestamp'] %}
 			<tr>
+				{% if actions %}
+				<td>
+					<a href="distribute.html/{{ id }}" class="btn btn-default">Distribute</a>
+				</td>
+				{% endif %}
 				<td>
 					{{ original_filename }}
 				</td>

@@ -7,14 +7,13 @@
 {% block content %}
 
 <a href="upload.html" class="btn btn-default">Upload file</a>
-<a href="distribute.html" class="btn btn-default">Distribute file</a>
 <a href="file_stash.html" class="btn btn-default">View uploaded files</a>
 <br>
 
 <div>
 <h2> Latest uploaded file </h2>
 {% if file_stash %}
-{{ FileStash.FileStash(file_stash) }}
+{{ FileStash.FileStash(file_stash, True) }}
 {% else %}
  apa
 {% endif %}
@@ -31,7 +30,7 @@
 
 {% if current_job %}
 
-<a href="cancel.html" class="btn btn-primary">Cancel this job</a>
+<a href="index.html?cancel=True" class="btn btn-primary">Cancel this job</a>
 
 {{ SendorJob.SendorJob(current_job) }}
 {% endif %}

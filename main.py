@@ -31,6 +31,10 @@ def create_ui(upload_folder):
 	@ui_app.route('/')
 	@ui_app.route('/index.html', methods = ['GET'])
 	def index():
+	
+		if request.args.get('cancel'):
+			g_sendor_queue.cancel_current_job()
+
 		file_stash = sorted(g_file_stash.files.values(), cmp = lambda x, y: cmp(x.timestamp, y.timestamp))
 		latest_uploaded_file = None
 		if len(file_stash) != 0:
@@ -57,6 +61,10 @@ def create_ui(upload_folder):
 	@ui_app.route('/file_stash.html', methods = ['GET'])
 	def file_stash():
 
+		if request.args.get('clear'):
+			g_sendor_queue.cancel_current_job()
+			g_file_stash.nuke()
+	
 		file_stash = sorted(g_file_stash.files.values(), cmp = lambda x, y: cmp(x.timestamp, y.timestamp))
 		file_stash_contents = []
 		for file in file_stash:
@@ -64,11 +72,6 @@ def create_ui(upload_folder):
 	
 		return render_template('file_stash.html',
 			file_stash = file_stash_contents)
-
-	@ui_app.route('/cancel.html', methods = ['GET'])
-	def cancel():
-		g_sendor_queue.cancel_current_job()
-		return redirect('index.html')
 
 	@ui_app.route('/upload.html', methods = ['GET', 'POST'])
 	def upload():
@@ -89,15 +92,13 @@ def create_ui(upload_folder):
 
 			return redirect('index.html')
 
-	@ui_app.route('/distribute.html', methods = ['GET', 'POST'])
-	def distribute():
+	@ui_app.route('/distribute.html/<id>', methods = ['GET', 'POST'])
+	def distribute(id):
 		if request.method == 'GET':
-			files = {}
-			for id, file in g_file_stash.files.items():
-				files[id] = file.to_json()
+			file_stash = [g_file_stash.get(id).to_json()]
 		
-			return Response(render_template('distribute_form.html',
-							files = files,
+			return Response(render_template('distribute.html',
+							file_stash = file_stash,
 							targets = g_targets.get_targets()))
 
 		elif request.method == 'POST':
