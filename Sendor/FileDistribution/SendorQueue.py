@@ -3,10 +3,12 @@ import os
 import shutil
 import thread
 import unittest
+import json
 
 from Queue import Queue
 
 from flask import render_template
+from SendorWS.sendorwshandler import notify_clients
 
 import traceback
 
@@ -27,7 +29,8 @@ class SendorJob(object):
 		status = []
 
 		for task in self.tasks[0:]:
-			status.append({ 'description' : task.string_description(),
+			status.append({ 'id' : task.id,
+							'description' : task.string_description(),
 							'state' : task.string_state(),
 							'details' : task.string_details() })
 			
@@ -58,15 +61,19 @@ class SendorTask(object):
 		
 	def started(self):
 		self.state = self.STARTED
-
+		notify_clients(self.jsonify_state())
+		
 	def completed(self):
 		self.state = self.COMPLETED
-
+		notify_clients(self.jsonify_state())
+		
 	def failed(self):
 		self.state = self.FAILED
+		notify_clients(self.jsonify_state())
 
 	def canceled(self):
 		self.state = self.CANCELED
+		notify_clients(self.jsonify_state())
 
 	def run(self):
 		for action in self.actions:
@@ -75,6 +82,9 @@ class SendorTask(object):
 	def string_description(self):
 		raise Exception("No description given")
 
+	def jsonify_state(self):
+		return json.dumps({'task_id': self.id, 'task_state': self.string_state()})
+		
 	def string_state(self):
 		if self.state == self.NOT_STARTED:
 			return 'not_started'

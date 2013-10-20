@@ -1,0 +1,13 @@
+{
+	"host" : "192.168.56.10",
+	"port" : "5000",
+	
+	"upload_folder" : "Sendor/test/upload",
+	"file_stash_folder" : "Sendor/test/file_stash",
+	"queue_folder" : "Sendor/test/queue",
+	
+	"logging" : {
+		"output" : "stdout",
+		"log_folder" : "Sendor/test/logs"
+	}
+}
