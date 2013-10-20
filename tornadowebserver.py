@@ -3,16 +3,13 @@ import tornado.web
 import tornado.wsgi
 
 from Sendor import root as mainapp
-
-class MainHandler(tornado.web.RequestHandler):
-    def get(self):
-        self.write("Hello, world")
+from SendorWS.sendorwshandler import WSHandler
 
 mainapp.secret_key = 'why would I tell you my secret key?'
 wsgi_app=tornado.wsgi.WSGIContainer(mainapp)
 
 application = tornado.web.Application([
-    (r"/tornado", MainHandler),
+    (r"/ws", WSHandler),
     ('.*', tornado.web.FallbackHandler, dict(fallback=wsgi_app)),
 ])
 

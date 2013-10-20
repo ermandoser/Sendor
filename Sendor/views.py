@@ -98,7 +98,7 @@ def create_ui(upload_folder, file_stash_folder, queue_folder, config_targets):
             
 			g_sendor_queue.add(job)
             
-			return redirect('index.html')
+			return jsonify(upload_status="OK")
     
 	@ui_app.route('/distribute.html', methods = ['GET', 'POST'])
 	def distribute():
