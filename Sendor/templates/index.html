@@ -5,40 +5,44 @@
 {% import "FileStash.html" as FileStash %}
 
 {% block content %}
-
-<a href="upload.html" class="btn btn-default">Upload file</a>
-<a href="file_stash.html" class="btn btn-default">View uploaded files</a>
-<br>
+<h2> Upload files </h2>
+<div id="file-container">
+<div id="filelist">No runtime found.</div>
+	<br />
+	<a id="pickfiles" href="#">[Select files]</a>
+	<a id="uploadfiles" href="#">[Upload files]</a>
 
 <div>
-<h2> Latest uploaded file </h2>
-{% if file_stash %}
-{{ FileStash.FileStash(file_stash, True) }}
-{% else %}
- apa
-{% endif %}
+<div>	
+<h2 id="file-stash-h"> Show uploaded files 
+	<span id="toggle-arrow-file-stash" class="down">&#9660</span>
+</h2>
+<div id="file-stash-div">
 
+</div>
 </div>
 
 <h2> Pending jobs </h2>
-<div>
+<div id="pending-jobs">
 {% for job in pending_jobs %}
 {{ SendorJob.SendorJob(job) }}
 {% endfor %}
-
+</div>
 <h2> Current job </h2>
 
+<div id="current-job">
 {% if current_job %}
 
 <a href="index.html?cancel=True" class="btn btn-primary">Cancel this job</a>
 
 {{ SendorJob.SendorJob(current_job) }}
+
 {% endif %}
-
+</div>
 <h2> Past jobs </h2>
-
+<div id="past-jobs">
 {% for job in past_jobs %}
 {{ SendorJob.SendorJob(job) }}
 {% endfor %}
-
+</div>
 {% endblock %}

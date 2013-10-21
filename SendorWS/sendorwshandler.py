@@ -19,4 +19,4 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 def notify_clients(task_state):
 	print("Notifying: " + task_state)
 	for client in clients:
-		client.write_message("task_state")
+		client.write_message(task_state)

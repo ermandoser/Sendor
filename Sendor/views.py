@@ -1,6 +1,6 @@
 import os 
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask import Blueprint, Response, redirect, url_for, render_template, request
 from werkzeug import secure_filename
 
@@ -8,7 +8,7 @@ from FileDistribution.SendorQueue import SendorQueue, SendorJob
 from FileDistribution.FileStash import FileStash
 from FileDistribution.Targets import Targets
 from FileDistribution.tasks import StashFileTask, DistributeFileTask
-
+from PluploadHandler import pluploadhandlers
 from Logger.logger import g_logger
 
 g_sendor_queue = None
@@ -24,6 +24,7 @@ def create_ui(upload_folder, file_stash_folder, queue_folder, config_targets):
 	g_sendor_queue = SendorQueue(queue_folder)
 	g_file_stash = FileStash(file_stash_folder)
 	g_targets = Targets(config_targets)
+	pluploadhandlers.set_upload_dir(upload_folder)
 	
 	@ui_app.route('/')
 	@ui_app.route('/index.html', methods = ['GET'])
@@ -51,6 +52,22 @@ def create_ui(upload_folder, file_stash_folder, queue_folder, config_targets):
                                current_job = current_job,
                                past_jobs = past_jobs)
 
+	@ui_app.route('/jobs/<job_type>', methods = ['GET'])
+	def display_jobs(job_type):
+		jobs = []
+		if job_type == 'current':
+			if g_sendor_queue.current_job:
+				jobs.append(g_sendor_queue.current_job.progress())
+		elif job_type == 'pending':
+			for job in reversed(list(g_sendor_queue.pending_jobs.queue)):
+				jobs.append(job.progress())
+		elif job_type == 'past':
+			for job in reversed(list(g_sendor_queue.past_jobs.queue)):
+				jobs.append(job.progress())
+		else:
+			pass
+		return render_template('current_job.html', joblist = jobs)
+		
 	@ui_app.route('/login', methods=["GET", "POST"])
 	def login():
 		print("LoginIn")
@@ -81,25 +98,22 @@ def create_ui(upload_folder, file_stash_folder, queue_folder, config_targets):
 		g_sendor_queue.cancel_current_job()
 		return redirect('index.html')
     
-	@ui_app.route('/upload.html', methods = ['GET', 'POST'])
+	@ui_app.route('/upload', methods = ['GET', 'POST'])
 	def upload():
 		if request.method == 'GET':
 			return Response(render_template('upload_form.html'))
-        
+			
 		elif request.method == 'POST':
-            
-			file = request.files['file']
-			filename = secure_filename(file.filename)
-			upload_file_full_path = os.path.join(upload_folder, filename)
-			file.save(upload_file_full_path)
-            
-			stash_file_task = StashFileTask(upload_folder, filename, g_file_stash)
-			job = SendorJob([stash_file_task])
-            
-			g_sendor_queue.add(job)
-            
-			return jsonify(upload_status="OK")
-    
+			try:
+				pluploadhandlers.upload(request)
+				if int(request.form['chunk']) == int(request.form['chunks']) - 1:
+					stash_file_task = StashFileTask(upload_folder, request.form['name'], g_file_stash)
+					job = SendorJob([stash_file_task])
+					g_sendor_queue.add(job)
+				return Response('uploaded')
+			except:
+				return Response('upload failed')
+
 	@ui_app.route('/distribute.html', methods = ['GET', 'POST'])
 	def distribute():
 		if request.method == 'GET':

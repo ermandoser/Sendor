@@ -7,10 +7,12 @@
     
     <link href="/static/bootstrap-3.0.0/css/bootstrap.css" rel="stylesheet">
     <link href="/static/bootstrap-3.0.0/css/bootstrap-theme.css" rel="stylesheet">
+    <link href="/static/sendor/css/styles.css" rel="stylesheet">
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="/static/sendor/js/plupload.full.min.js"></script>
+    <script src="/static/sendor/js/main.js"></script>
     <style type="text/css">
       body {
-      padding-top: 60px;
       padding-bottom: 40px;
       }
     </style>
@@ -18,9 +20,11 @@
   
   <body>
     {% block header %}
+<div class = "header-container">
     <div class="container">
-      <p><h3>Sendor</h3></p>
+      <p><span class="header">sendor</span></p>
     </div>
+</div>
     {% endblock %}
     <hr>
     
@@ -39,7 +43,6 @@
 	   		ws.send("Hello, world");
 		};
 		ws.onmessage = function (evt) {
-			console.log(evt.data);		
 			var obj = jQuery.parseJSON(evt.data);
 	   		$("#"+obj.task_id).text(obj.task_state);
 		};

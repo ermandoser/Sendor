@@ -1,0 +1,8 @@
+{% import "SendorJob.html" as SendorJob %}
+
+{% for job in joblist %}
+
+<a href="index.html?cancel=True" class="btn btn-primary">Cancel this job</a>
+
+{{ SendorJob.SendorJob(job) }}
+{% endfor %}
