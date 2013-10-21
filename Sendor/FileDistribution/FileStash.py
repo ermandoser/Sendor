@@ -118,7 +118,7 @@ class FileStash(object):
 			"""
 		original_file = os.path.join(original_path, filename)
 
-		sha1sum = local('shasum -b ' + original_file, capture = True)[:40]
+		sha1sum = local('sha1sum -b ' + original_file, capture = True)[:40]
 		size = os.stat(original_file).st_size
 
 		file = self.add_to_index(filename, sha1sum, timestamp, size)
