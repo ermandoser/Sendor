@@ -53,7 +53,7 @@ $(function(){
 	runtimes : 'gears,html5,browserplus',
 	browse_button : 'pickfiles',
 	container : 'file-container',
-	max_file_size : '1000mb',
+	max_file_size : '2000mb',
 	url : '/ui/upload',
 	chunk_size : '5mb',
 	unique_names : false,
