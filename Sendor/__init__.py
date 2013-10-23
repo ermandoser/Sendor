@@ -4,7 +4,7 @@ import json
 from flask import Flask, redirect
 from Sendor.views import create_ui
 from Sendor.Logger.logger import initialize_logger
-#from Sendor.Logger import g_logger
+from fabric.api import local
 
 g_config = {}
 
@@ -14,9 +14,8 @@ def load_config(host_config_filename, targets_config_filename):
 		g_config = json.load(file)
 	with open(targets_config_filename) as file:
 		g_config['targets'] = json.load(file)
-
-#load_config(host_config_filename, targets_config_filename)
-load_config('Sendor/test/host_config.json', 'Sendor/test/local_machine_targets.json')
+		
+load_config('Sendor/configfiles/host_config.json', 'Sendor/configfiles/ssh_remote_targets.json')
 
 initialize_logger(g_config['logging'])
 	

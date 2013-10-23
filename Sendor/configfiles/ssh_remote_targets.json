@@ -1,0 +1,20 @@
+{
+	"ssh_remote_target_sydney_parallel_scp" : {
+		"name" : "SSH remote target Sydney (Parallel SCP)",
+		"user" : "ec2-user",
+		"host" : "ec2-54-252-20-251.ap-southeast-2.compute.amazonaws.com",
+		"port" : "22",
+		"private_key_file" : "/home/erman/.ssh/ec2-54-252-20-251.ap-southeast-2.compute.amazonaws.com.private_key",
+		"distribution_method" : "parallel_scp",
+		"max_parallel_transfers" : "10"
+	},
+	"ssh_remote_target_sydney_parallel_sftp" : {
+		"name" : "SSH remote target Sydney (Parallel SFTP)",
+		"user" : "ec2-user",
+		"host" : "ec2-54-252-20-251.ap-southeast-2.compute.amazonaws.com",
+		"port" : "22",
+		"private_key_file" : "/home/erman/.ssh/ec2-54-252-20-251.ap-southeast-2.compute.amazonaws.com.private_key",
+		"distribution_method" : "parallel_sftp",
+		"max_parallel_transfers" : "10"
+	}
+}
