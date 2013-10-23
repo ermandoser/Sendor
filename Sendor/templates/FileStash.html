@@ -1,5 +1,6 @@
 
-{% macro FileStash(files, actions) %}
+{% import "distribute.html" as DistributeForm %}
+{% macro FileStash(files, actions, targets) %}
 <table class="table table-bordered table-hover">
 	<thead>
 		<tr>
@@ -17,10 +18,10 @@
 			{% set id = file['id'] %}
 			{% set size = file['size'] %}
 			{% set timestamp = file['timestamp'] %}
-			<tr>
+			<tr id="file-info-{{id}}">
 				{% if actions %}
 				<td>
-					<a href="distribute.html/{{ id }}" class="btn btn-default">Distribute</a>
+					<span class="btn btn-default dist-button">Distribute</span>
 				</td>
 				{% endif %}
 				<td>
@@ -33,7 +34,30 @@
 					{{ timestamp }}
 				</td>
 			</tr>
+			<tr class="init-invisible">
+			  <td>
+			    {{ DistributeForm.DistributeForm(id, targets) }}
+			  </td>
+			  <td></td><td></td><td></td>
+			</tr>
 		{% endfor %}
 	</tbody>
 </table>
+<script>
+$(function(){
+		
+	//Adding click event handlers for distribution buttons
+	$("span.dist-button").click(function(){
+            var $This = $(this);
+            var parentTableRow = $This.parent().parent();
+            var fileId = parentTableRow.attr('id').split('-')[2];
+            var distForm = $("#dist-form-" + fileId);
+            //distForm.toggle();
+            
+            //Paste the distribution form right after the row and show
+            parentTableRow.next().toggle();
+	});
+	
+});
+</script>
 {% endmacro %}

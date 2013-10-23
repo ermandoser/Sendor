@@ -91,7 +91,8 @@ def create_ui(upload_folder, file_stash_folder, queue_folder, config_targets):
 			file_stash_contents.append(file.to_json())
         
 		return render_template('file_stash.html',
-                               file_stash = file_stash_contents)
+                               file_stash = file_stash_contents,
+			       targets = g_targets.get_targets())
     
 	@ui_app.route('/cancel.html', methods = ['GET'])
 	def cancel():
@@ -114,15 +115,16 @@ def create_ui(upload_folder, file_stash_folder, queue_folder, config_targets):
 			except:
 				return Response('upload failed')
 
-	@ui_app.route('/distribute.html', methods = ['GET', 'POST'])
-	def distribute():
-		if request.method == 'GET':
-			files = {}
-			for id, file in g_file_stash.files.items():
-				files[id] = file.to_json()
+	@ui_app.route('/distribute.html', methods = ['POST'])
+	@ui_app.route('/distribute.html/<file_id>', methods = ['GET'])
+	def distribute(file_id=0):
+		if request.method == 'GET': 
+			#files = {}
+			#for id, file in g_file_stash.files.items():
+			#	files[id] = file.to_json()
             
-			return Response(render_template('distribute	_form.html',
-                                            files = files,
+			return Response(render_template('distribute.html',
+					    file_id = file_id,
                                             targets = g_targets.get_targets()))
         
 		elif request.method == 'POST':
@@ -141,7 +143,7 @@ def create_ui(upload_folder, file_stash_folder, queue_folder, config_targets):
 			job = SendorJob(distribute_file_tasks)
 			g_sendor_queue.add(job)
             
-			return redirect('index.html')
+			return Response("Distribution job succesfully added to the queue")
     
 	g_logger.info("Created ui")
     

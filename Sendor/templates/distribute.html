@@ -1,27 +1,21 @@
-{% extends "base.html" %}
 
-{% import "FileStash.html" as FileStash %}
+{% macro DistributeForm(file_id, targets) %}
+<div id="dist-form-{{file_id}}">
+  <form id="dist-submit" method="post" enctype="multipart/form-data">
 
-{% block content %}
-
-<form action="" method=post enctype=multipart/form-data>
-
-  <legend>File to transfer</legend>
-  {{ FileStash.FileStash(file_stash, False) }}
-  <input type="hidden" name="file" value="{{ file_stash[0]['id'] }}">
+    <input type="hidden" name="file" value="{{ file_id }}">
   
-  <legend>1. Choose targets</legend>
+    <legend>Choose targets</legend>
 
-  {% for id, parameters in targets.iteritems() %}
-  {% set name = parameters['name'] %}
-  <label class="checkbox">
-    <input type="checkbox" name="target" value="{{ id }}" checked>{{ name }}
-  </label>
-  {% endfor %}
-
-  <br>
-  <legend>2. Fire in the hole!</legend>
-  <input type="submit" action="upload">
-</form>
-
-{% endblock %}
+    {% for id, parameters in targets.iteritems() %}
+    {% set name = parameters['name'] %}
+    <label class="checkbox">
+      <input type="checkbox" name="target" value="{{ id }}" checked>{{ name }}
+    </label>
+    {% endfor %}
+    
+    <br>
+    <input type="submit">
+  </form>
+</div>
+{% endmacro %}
