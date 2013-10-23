@@ -15,7 +15,7 @@ import traceback
 class SendorJob(object):
 
 	def __init__(self, tasks=[]):
-		self.id = None
+		self.job_id = None
 		self.work_directory = None
 		self.tasks = tasks
 
@@ -29,15 +29,15 @@ class SendorJob(object):
 		status = []
 
 		for task in self.tasks[0:]:
-			status.append({ 'id' : task.id,
-							'description' : task.string_description(),
-							'state' : task.string_state(),
-							'details' : task.string_details() })
+			status.append({ 'id' : str(self.job_id) + "-" + str(task.id),
+					'description' : task.string_description(),
+					'state' : task.string_state(),
+					'details' : task.string_details() })
 			
 		return status
 
-	def set_queue_info(self, id, work_directory):
-		self.id = id
+	def set_queue_info(self, job_id, work_directory):
+		self.job_id = job_id
 		self.work_directory = work_directory
 		
 class SendorTask(object):
@@ -53,10 +53,12 @@ class SendorTask(object):
 		self.details = ""
 		self.actions = []
 		self.id = None
+		self.job_id = None
 		self.work_directory = None
 
-	def set_queue_info(self, id, work_directory):
+	def set_queue_info(self, id, job_id, work_directory):
 		self.id = id
+		self.job_id = job_id
 		self.work_directory = work_directory
 		
 	def started(self):
@@ -83,7 +85,9 @@ class SendorTask(object):
 		raise Exception("No description given")
 
 	def jsonify_state(self):
-		return json.dumps({'task_id': self.id, 'task_state': self.string_state()})
+		return json.dumps({'task_id': str(self.job_id) + "-" + str(self.id), 
+				   'task_state': self.string_state(),
+				   'details' : self.details})
 		
 	def string_state(self):
 		if self.state == self.NOT_STARTED:
@@ -104,6 +108,7 @@ class SendorTask(object):
 
 	def append_details(self, string):
 		self.details = self.details + string + "\n"
+		notify_clients(self.jsonify_state())
 
 	def translate_path(self, path):
 		if self.work_directory:
@@ -168,13 +173,13 @@ class SendorQueue():
 	def add(self, job):
 		job_id = self.unique_id
 		job_work_directory = os.path.join(self.work_directory, 'current_job')
-		job.set_queue_info(id, job_work_directory)
+		job.set_queue_info(job_id, job_work_directory)
 		self.unique_id = self.unique_id + 1
 
 		task_id = 0
 		for task in job.tasks:
 			task_work_directory = os.path.join(job_work_directory, str(task_id))
-			task.set_queue_info(task_id, task_work_directory)
+			task.set_queue_info(task_id, job_id, task_work_directory)
 			task_id = task_id + 1
 
 		self.pending_jobs.put(job)
