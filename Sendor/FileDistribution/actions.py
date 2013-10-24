@@ -22,8 +22,10 @@ class FabricAction(SendorAction):
 		with fabric.api.settings(warn_only=True):
 			result = local(command, capture=True)
 			self.task.append_details(command)
-			self.task.append_details(result)
-			self.task.append_details(result.stderr)
+			if result:
+				self.task.append_details(result)
+			if result.stderr:
+				self.task.append_details(result.stderr)
 			if result.failed:
 				raise Exception("Fabric command failed")
 			return result
@@ -32,8 +34,10 @@ class FabricAction(SendorAction):
 		with fabric.api.settings(warn_only=True):
 			result = run(command)
 			self.task.append_details(command)
-			self.task.append_details(result)
-			self.task.append_details(result.stderr)
+			if result:
+				self.task.append_details(result)
+			if result.stderr:
+				self.task.append_details(result.stderr)
 			if result.failed:
 				raise Exception("Fabric command failed")
 			return result

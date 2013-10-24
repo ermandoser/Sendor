@@ -84,10 +84,10 @@ class SendorTask(object):
 	def string_description(self):
 		raise Exception("No description given")
 
-	def jsonify_state(self):
+	def jsonify_state(self, new_detail=""):
 		return json.dumps({'task_id': str(self.job_id) + "-" + str(self.id), 
 				   'task_state': self.string_state(),
-				   'details' : self.details})
+				   'new_detail' : new_detail})
 		
 	def string_state(self):
 		if self.state == self.NOT_STARTED:
@@ -107,8 +107,9 @@ class SendorTask(object):
 		return self.details
 
 	def append_details(self, string):
-		self.details = self.details + string + "\n"
-		notify_clients(self.jsonify_state())
+		string = string + "\n"
+		self.details = self.details + string
+		notify_clients(self.jsonify_state(string))
 
 	def translate_path(self, path):
 		if self.work_directory:

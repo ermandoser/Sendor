@@ -45,7 +45,9 @@
 		ws.onmessage = function (evt) {
 			var obj = jQuery.parseJSON(evt.data);
 	   		$("#"+obj.task_id).text(obj.task_state);
-		        $("pre#task-details").text(obj.details);
+		        if (obj.new_detail){
+		            $("pre#task-details").append(obj.new_detail);
+		        }
 		};
 	</script>
     {% block footer %}
