@@ -15,7 +15,7 @@ def load_config(host_config_filename, targets_config_filename):
 	with open(targets_config_filename) as file:
 		g_config['targets'] = json.load(file)
 		
-load_config('Sendor/configfiles/host_config.json', 'Sendor/configfiles/ssh_remote_targets.json')
+load_config('Sendor/configfiles/host_config.json', 'Sendor/configfiles/ssh_rsp_targets.json')
 
 initialize_logger(g_config['logging'])
 	

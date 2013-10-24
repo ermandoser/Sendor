@@ -5,9 +5,9 @@ import os
 import unittest
 
 from SendorQueue import SendorTask, SendorAction
+from Sendor.DiceWatermark.watermarkaction import ApplyWaterMarkAction
 
 import target_distribution_methods
-
 import target_distribution_method_cp
 import target_distribution_method_scp
 import target_distribution_method_sftp
@@ -36,9 +36,17 @@ class Targets(object):
 			raise Exception("id " + id + " does not exist in targets")
 
 		target = self.targets[id]
-		actions = [ LogDistributionAction("Started", filename, target),
+		
+		actions = []
+		
+		if 'watermark' in target:
+			tempfile = os.path.join('{task_work_directory}', 'watermarked.zip')
+			actions.extend([ApplyWaterMarkAction(task, source, tempfile, target['watermark'])])
+			source = tempfile
+		
+		actions.extend([ LogDistributionAction("Started", filename, target),
 			target_distribution_methods.create_action(task, source, filename, target),
-			LogDistributionAction("Completed", filename, target) ]
+			LogDistributionAction("Completed", filename, target) ])
 
 		return actions
 
