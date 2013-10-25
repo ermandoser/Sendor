@@ -38,7 +38,9 @@
     
     <script src="/static/bootstrap-3.0.0/js/bootstrap.js"></script>
     <script>
-		var ws = new WebSocket("ws://10.20.100.88:8888/ws");
+                var docUrl = window.location.host;
+		console.log(docUrl);
+		var ws = new WebSocket("ws://" + docUrl + "/ws");
 		ws.onopen = function() {
 	   		ws.send("Hello, world");
 		};
