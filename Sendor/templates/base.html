@@ -46,9 +46,9 @@
 		};
 		ws.onmessage = function (evt) {
 			var obj = jQuery.parseJSON(evt.data);
-	   		$("#"+obj.task_id).text(obj.task_state);
+	   		$("#" + obj.task_id).text(obj.task_state);
 		        if (obj.new_detail){
-		            $("pre#task-details").append(obj.new_detail);
+		            $("pre#task-details-" + obj.task_id).append(obj.new_detail);
 		        }
 		};
 	</script>
