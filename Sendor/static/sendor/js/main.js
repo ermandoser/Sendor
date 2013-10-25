@@ -15,7 +15,6 @@ $(function(){
         $("form#dist-submit").submit(function(event){
 	    event.preventDefault();
 	    var formData = new FormData($(this)[0]);
-	    console.log("WTF");
 	    $.ajax({
 		url: 'distribute.html',
 		type: 'POST',
